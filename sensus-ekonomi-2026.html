@@ -358,6 +358,9 @@
     <button class="btn btn-ghost btn-sm" style="flex:1" onclick="openPrelist()">📋 Prelist</button>
     <button class="btn btn-ghost btn-sm" style="flex:1" onclick="openLogoutModal()">⏻ Keluar</button>
   </div>
+  <div class="toolbar" style="margin-top:-4px; margin-bottom:10px">
+    <button class="btn btn-ghost btn-sm btn-block" onclick="openCleanupModal()">🧹 Bersihkan Semua Foto (bebaskan penyimpanan)</button>
+  </div>
 
   <div id="emptyState" class="empty" style="display:none">
     <div class="glyph">📋</div>
@@ -677,8 +680,10 @@ function persist(){
     ind.classList.add('show');
     clearTimeout(window._si);
     window._si = setTimeout(()=>ind.classList.remove('show'), 1600);
+    return true;
   }catch(e){
     alert('Gagal menyimpan ke perangkat. Penyimpanan mungkin penuh.');
+    return false;
   }
 }
 
@@ -758,7 +763,7 @@ function renderList(){
         <button class="btn btn-ghost btn-sm" onclick="openHousehold('${h.id}')">✎ Edit</button>
         <button class="btn btn-ghost btn-sm" onclick="duplicateHousehold('${h.id}')">⧉ Duplikat</button>
         <button class="btn btn-teal btn-sm" onclick="exportOne('${h.id}')">⇩ Unduh</button>
-        ${h.fotos && Object.keys(h.fotos).length ? `<button class="btn btn-teal btn-sm" onclick="downloadFotos('${h.id}')">📷 Foto (${Object.keys(h.fotos).length})</button>` : ''}
+        ${h.fotoKeys && h.fotoKeys.length ? `<button class="btn btn-teal btn-sm" onclick="downloadFotos('${h.id}')">📷 Foto (${h.fotoKeys.length})</button>` : ''}
         <button class="btn btn-red btn-sm" onclick="askDelete('${h.id}')">✕ Hapus</button>
       </div>
     </div>`;
@@ -827,25 +832,25 @@ function newHousehold(){
   window.scrollTo(0,0);
 }
 
-function openHousehold(id){
+async function openHousehold(id){
   const h = households.find(x=>x.id===id);
   if(!h) return;
   currentId = id;
-  fillForm(h);
+  await fillForm(h);
   openSections = new Set([0]);
   renderSections();
   showView('form');
   window.scrollTo(0,0);
 }
 
-function duplicateHousehold(id){
+async function duplicateHousehold(id){
   const h = households.find(x=>x.id===id);
   if(!h) return;
   currentId = null;
-  fillForm(h);
+  await fillForm(h);
   document.getElementById('f_kepala').value = '';
   currentFotos = {};
-  ['depan','ruangtamu','kk','meteran'].forEach(renderFotoSlot);
+  FOTO_KEYS.forEach(renderFotoSlot);
   openSections = new Set([0]);
   renderSections();
   showView('form');
@@ -946,9 +951,83 @@ function addAset(data){
   wrap.appendChild(div);
 }
 
+/* ---------- Penyimpanan Foto: IndexedDB (kapasitas jauh lebih besar dari localStorage) ---------- */
+const PHOTO_DB_NAME = 'se2026_photos_db';
+const PHOTO_STORE = 'photos';
+let _photoDbPromise = null;
+
+function openPhotoDB(){
+  if(_photoDbPromise) return _photoDbPromise;
+  _photoDbPromise = new Promise((resolve, reject)=>{
+    const req = indexedDB.open(PHOTO_DB_NAME, 1);
+    req.onupgradeneeded = function(e){
+      const db = e.target.result;
+      if(!db.objectStoreNames.contains(PHOTO_STORE)){
+        db.createObjectStore(PHOTO_STORE, { keyPath: 'id' });
+      }
+    };
+    req.onsuccess = function(e){ resolve(e.target.result); };
+    req.onerror = function(e){ reject(e.target.error); };
+  });
+  return _photoDbPromise;
+}
+function photoDbKey(householdId, key){ return householdId+'::'+key; }
+
+async function savePhotoToDB(householdId, key, dataUrl){
+  const db = await openPhotoDB();
+  return new Promise((resolve, reject)=>{
+    const tx = db.transaction(PHOTO_STORE, 'readwrite');
+    tx.objectStore(PHOTO_STORE).put({ id: photoDbKey(householdId,key), householdId, key, dataUrl });
+    tx.oncomplete = ()=>resolve();
+    tx.onerror = ()=>reject(tx.error);
+  });
+}
+async function deletePhotoFromDB(householdId, key){
+  const db = await openPhotoDB();
+  return new Promise((resolve, reject)=>{
+    const tx = db.transaction(PHOTO_STORE, 'readwrite');
+    tx.objectStore(PHOTO_STORE).delete(photoDbKey(householdId,key));
+    tx.oncomplete = ()=>resolve();
+    tx.onerror = ()=>reject(tx.error);
+  });
+}
+async function getAllPhotosForHousehold(householdId){
+  const db = await openPhotoDB();
+  return new Promise((resolve, reject)=>{
+    const tx = db.transaction(PHOTO_STORE, 'readonly');
+    const store = tx.objectStore(PHOTO_STORE);
+    const result = {};
+    const req = store.openCursor();
+    req.onsuccess = function(e){
+      const cursor = e.target.result;
+      if(cursor){
+        if(cursor.value.householdId === householdId) result[cursor.value.key] = cursor.value.dataUrl;
+        cursor.continue();
+      }else{
+        resolve(result);
+      }
+    };
+    req.onerror = ()=>reject(req.error);
+  });
+}
+async function deleteAllPhotosForHousehold(householdId){
+  const photos = await getAllPhotosForHousehold(householdId);
+  await Promise.all(Object.keys(photos).map(key=>deletePhotoFromDB(householdId, key)));
+}
+async function clearAllPhotosDB(){
+  const db = await openPhotoDB();
+  return new Promise((resolve, reject)=>{
+    const tx = db.transaction(PHOTO_STORE, 'readwrite');
+    tx.objectStore(PHOTO_STORE).clear();
+    tx.oncomplete = ()=>resolve();
+    tx.onerror = ()=>reject(tx.error);
+  });
+}
+
 /* ---------- Foto Dokumentasi ---------- */
-let currentFotos = {}; // {depan: dataURL, ruangtamu: dataURL, kk: dataURL}
+let currentFotos = {}; // sementara di memori selama form dibuka: {depan: dataURL, ruangtamu: dataURL, ...}
 const FOTO_LABELS = { depan: 'Rumah Tampak Depan', ruangtamu: 'Ruang Tamu', kk: 'Foto KK', meteran: 'Foto Meteran' };
+const FOTO_KEYS = ['depan','ruangtamu','kk','meteran'];
 
 ['depan','ruangtamu','kk','meteran'].forEach(key=>{
   const input = document.getElementById('input_'+key);
@@ -956,7 +1035,7 @@ const FOTO_LABELS = { depan: 'Rumah Tampak Depan', ruangtamu: 'Ruang Tamu', kk: 
   input.addEventListener('change', function(e){
     const file = e.target.files[0];
     if(!file) return;
-    compressImage(file, 900, 0.6).then(dataUrl=>{
+    compressImage(file, 700, 0.45).then(dataUrl=>{
       currentFotos[key] = dataUrl;
       renderFotoSlot(key);
     }).catch(()=>{
@@ -1019,16 +1098,17 @@ function downloadOneFoto(dataUrl, filename){
   document.body.appendChild(a); a.click();
   document.body.removeChild(a);
 }
-function downloadFotos(id){
+async function downloadFotos(id){
   const h = households.find(x=>x.id===id);
-  if(!h || !h.fotos) return;
-  const keys = Object.keys(h.fotos);
+  if(!h) return;
+  const photos = await getAllPhotosForHousehold(id);
+  const keys = Object.keys(photos);
   if(keys.length === 0){ alert('Belum ada foto untuk keluarga ini.'); return; }
   const safeName = (h.kepala||'responden').replace(/[^a-z0-9]+/gi,'_');
   keys.forEach((key,i)=>{
     setTimeout(()=>{
       const label = (FOTO_LABELS[key]||key).replace(/[^a-z0-9]+/gi,'_');
-      downloadOneFoto(h.fotos[key], `SE2026_${h.nomorBangunan||'0'}_${h.nomorKeluarga||'0'}_${safeName}_${label}.jpg`);
+      downloadOneFoto(photos[key], `SE2026_${h.nomorBangunan||'0'}_${h.nomorKeluarga||'0'}_${safeName}_${label}.jpg`);
     }, i*400);
   });
 }
@@ -1078,7 +1158,7 @@ function clearForm(){
   updateSummary();
 }
 
-function fillForm(h){
+async function fillForm(h){
   clearForm();
   document.getElementById('f_nomorBangunan').value = h.nomorBangunan||'';
   document.getElementById('f_nomorKeluarga').value = h.nomorKeluarga||'';
@@ -1100,9 +1180,15 @@ function fillForm(h){
   (h.asetItems||[]).forEach(a=>addAset(a));
   (h.modalUsahaItems||[]).forEach(m=>addModalUsaha(m));
   (h.asetUsaha||[]).forEach(a=>addAsetUsaha(a));
-  currentFotos = Object.assign({}, h.fotos||{});
-  ['depan','ruangtamu','kk','meteran'].forEach(renderFotoSlot);
   updateSummary();
+
+  // Muat foto dari IndexedDB (async, terpisah dari data teks yang sudah tampil duluan)
+  try{
+    currentFotos = h.id ? await getAllPhotosForHousehold(h.id) : {};
+  }catch(e){
+    currentFotos = {};
+  }
+  FOTO_KEYS.forEach(renderFotoSlot);
 }
 
 function collectAnggota(){
@@ -1164,7 +1250,7 @@ function updateSummary(){
 }
 document.getElementById('formView').addEventListener('input', updateSummary);
 
-function saveHousehold(){
+async function saveHousehold(){
   const kepala = document.getElementById('f_kepala').value.trim();
   const dusun = document.getElementById('f_dusun').value.trim();
   if(!kepala){
@@ -1173,6 +1259,9 @@ function saveHousehold(){
     openSections.add(0); renderSections();
     return;
   }
+  const saveBtn = document.querySelector('#formBar .btn-primary');
+  if(saveBtn){ saveBtn.disabled = true; saveBtn.textContent = 'Menyimpan...'; }
+
   const data = {
     id: currentId || ('h_'+Date.now()+'_'+Math.random().toString(36).slice(2,7)),
     nomorBangunan: document.getElementById('f_nomorBangunan').value.trim(),
@@ -1195,15 +1284,27 @@ function saveHousehold(){
     gajiKaryawan: parseRupiah(document.getElementById('f_gajiKaryawan').value),
     labaUsaha: parseRupiah(document.getElementById('f_labaUsaha').value),
     asetUsaha: collectAsetUsaha(),
-    fotos: Object.assign({}, currentFotos),
+    fotoKeys: Object.keys(currentFotos),
     catatanKesehatan: document.getElementById('f_catatanKesehatan').value.trim(),
     updatedAt: Date.now(),
     createdAt: currentId ? (households.find(h=>h.id===currentId)||{}).createdAt || Date.now() : Date.now(),
   };
+
+  // Simpan/hapus foto di IndexedDB (terpisah dari localStorage, kapasitas jauh lebih besar)
+  try{
+    await Promise.all(FOTO_KEYS.map(key=>{
+      if(currentFotos[key]) return savePhotoToDB(data.id, key, currentFotos[key]);
+      return deletePhotoFromDB(data.id, key);
+    }));
+  }catch(e){
+    alert('Gagal menyimpan foto ke penyimpanan HP. Data teks tetap disimpan.');
+  }
+
   const idx = households.findIndex(h=>h.id===data.id);
   if(idx>=0) households[idx] = data; else households.push(data);
   persist();
   refreshDusunList();
+  if(saveBtn){ saveBtn.disabled = false; saveBtn.textContent = '✓ Simpan Data'; }
   backToList();
   syncToServer();
 }
@@ -1241,13 +1342,14 @@ function closeImportModal(){
   importedData = null;
   document.getElementById('importModal').classList.remove('show');
 }
-function doImport(mode){
+async function doImport(mode){
   if(!importedData) return;
+  const cleanData = await distributePhotosAndStrip(importedData);
   if(mode === 'replace'){
-    households = importedData;
+    households = cleanData;
   }else{
     const existingIds = new Set(households.map(h=>h.id));
-    importedData.forEach(h=>{
+    cleanData.forEach(h=>{
       if(existingIds.has(h.id)){
         const idx = households.findIndex(x=>x.id===h.id);
         households[idx] = h;
@@ -1273,10 +1375,36 @@ function closeDeleteModal(){
   deleteTargetId = null;
   document.getElementById('deleteModal').classList.remove('show');
 }
-function confirmDelete(){
-  households = households.filter(h=>h.id!==deleteTargetId);
+async function confirmDelete(){
+  const idToDelete = deleteTargetId;
+  households = households.filter(h=>h.id!==idToDelete);
   persist();
   closeDeleteModal();
+  renderList();
+  syncToServer();
+  try{ await deleteAllPhotosForHousehold(idToDelete); }catch(e){}
+}
+
+function openCleanupModal(){
+  document.getElementById('cleanupModal').classList.add('show');
+}
+function closeCleanupModal(){
+  document.getElementById('cleanupModal').classList.remove('show');
+}
+async function confirmCleanup(){
+  households = households.map(h=>{
+    const copy = Object.assign({}, h);
+    copy.fotoKeys = [];
+    return copy;
+  });
+  closeCleanupModal();
+  try{
+    await clearAllPhotosDB();
+  }catch(e){}
+  const ok = persist();
+  if(ok){
+    alert('Semua foto berhasil dibersihkan. Ruang penyimpanan sudah lebih lega.');
+  }
   renderList();
   syncToServer();
 }
@@ -1352,10 +1480,10 @@ ${(h.asetUsaha||[]).length ? h.asetUsaha.map(a=>`    - ${a.nama||'-'}: ${fmtRp(a
 
 FOTO DOKUMENTASI
 ------------------------------------------
-  Rumah Tampak Depan : ${h.fotos && h.fotos.depan ? 'Ada' : 'Belum ada'}
-  Ruang Tamu          : ${h.fotos && h.fotos.ruangtamu ? 'Ada' : 'Belum ada'}
-  Foto KK             : ${h.fotos && h.fotos.kk ? 'Ada' : 'Belum ada'}
-  Foto Meteran        : ${h.fotos && h.fotos.meteran ? 'Ada' : 'Belum ada'}
+  Rumah Tampak Depan : ${h.fotoKeys && h.fotoKeys.includes('depan') ? 'Ada' : 'Belum ada'}
+  Ruang Tamu          : ${h.fotoKeys && h.fotoKeys.includes('ruangtamu') ? 'Ada' : 'Belum ada'}
+  Foto KK             : ${h.fotoKeys && h.fotoKeys.includes('kk') ? 'Ada' : 'Belum ada'}
+  Foto Meteran        : ${h.fotoKeys && h.fotoKeys.includes('meteran') ? 'Ada' : 'Belum ada'}
   (Unduh file foto terpisah lewat tombol "📷 Foto" di daftar responden)
 
 ==========================================
@@ -1405,8 +1533,9 @@ function exportCSV(){
   }).join(',')).join('\n');
   downloadFile('sensus_ekonomi_2026_'+dateStamp()+'.csv', '\uFEFF'+csv, 'text/csv;charset=utf-8');
 }
-function exportJSON(){
-  downloadFile('sensus_ekonomi_2026_backup_'+dateStamp()+'.json', JSON.stringify(households,null,2), 'application/json');
+async function exportJSON(){
+  const fullData = await householdsForSync();
+  downloadFile('sensus_ekonomi_2026_backup_'+dateStamp()+'.json', JSON.stringify(fullData,null,2), 'application/json');
 }
 function dateStamp(){
   const d = new Date();
@@ -1477,8 +1606,32 @@ function apiConfigured(){
 // jadi kapasitasnya jauh lebih longgar dibanding sel Google Sheets).
 // Catatan: kalau foto menumpuk banyak & besar, proses sinkron bisa jadi lebih lambat
 // terutama di jaringan lambat — wajar, tunggu sampai selesai jangan ditutup aplikasinya.
-function householdsForSync(){
-  return households;
+async function householdsForSync(){
+  return Promise.all(households.map(async h=>{
+    const copy = Object.assign({}, h);
+    try{
+      copy.fotos = await getAllPhotosForHousehold(h.id);
+    }catch(e){
+      copy.fotos = {};
+    }
+    return copy;
+  }));
+}
+
+async function distributePhotosAndStrip(householdsArr){
+  return Promise.all(householdsArr.map(async h=>{
+    const copy = Object.assign({}, h);
+    if(copy.fotos && typeof copy.fotos === 'object' && Object.keys(copy.fotos).length){
+      try{
+        await Promise.all(Object.keys(copy.fotos).map(key=>savePhotoToDB(copy.id, key, copy.fotos[key])));
+        copy.fotoKeys = Object.keys(copy.fotos);
+      }catch(e){
+        copy.fotoKeys = copy.fotoKeys || [];
+      }
+    }
+    delete copy.fotos;
+    return copy;
+  }));
 }
 
 async function loginApp(){
@@ -1510,6 +1663,8 @@ async function loginApp(){
       try{ serverHouseholds = JSON.parse(resData.data || '[]'); }catch(e){ serverHouseholds = []; }
 
       if(Array.isArray(serverHouseholds) && serverHouseholds.length){
+        setLockStatus('Memuat foto dari server...', '');
+        serverHouseholds = await distributePhotosAndStrip(serverHouseholds);
         if(households.length === 0){
           households = serverHouseholds;
           persist();
@@ -1545,7 +1700,7 @@ async function syncToServer(silent){
         action: 'sync',
         kode: lic.kode,
         deviceId: lic.deviceId,
-        data: JSON.stringify(householdsForSync())
+        data: JSON.stringify(await householdsForSync())
       })
     });
     const resData = await res.json();
@@ -1554,6 +1709,7 @@ async function syncToServer(silent){
     return false;
   }
 }
+
 async function manualSync(){
   const lic = getLicense();
   if(!lic || !lic.loggedIn){
@@ -1590,7 +1746,7 @@ async function confirmLogout(){
         action: 'logout',
         kode: lic.kode,
         deviceId: lic.deviceId,
-        data: JSON.stringify(householdsForSync())
+        data: JSON.stringify(await householdsForSync())
       })
     });
     const resData = await res.json();
@@ -1610,6 +1766,22 @@ async function confirmLogout(){
   }
 }
 
+/* ---------- Migrasi foto format lama (sebelum IndexedDB) ---------- */
+// Versi lama menyimpan foto langsung di dalam data keluarga (h.fotos) di localStorage.
+// Fungsi ini mendeteksi data lama itu, memindahkan fotonya ke IndexedDB,
+// lalu membersihkan data keluarga supaya konsisten dengan format baru (h.fotoKeys).
+async function migrateOldPhotos(){
+  const needsMigration = households.some(h => h.fotos && typeof h.fotos === 'object' && Object.keys(h.fotos).length);
+  if(!needsMigration) return;
+  try{
+    households = await distributePhotosAndStrip(households);
+    persist();
+    renderList();
+  }catch(e){
+    console.log('Migrasi foto lama gagal:', e);
+  }
+}
+
 /* ---------- Init ---------- */
 // Ditunda sampai seluruh HTML (termasuk layar kunci di bawah) selesai dimuat,
 // supaya checkLicense() tidak gagal mencari elemen yang belum ada di DOM.
@@ -1618,6 +1790,7 @@ document.addEventListener('DOMContentLoaded', function(){
   loadData();
   refreshDusunList();
   renderList();
+  migrateOldPhotos();
 });
 
 // Daftarkan service worker (mode PWA) — biar aplikasi tetap bisa dibuka offline
@@ -1661,6 +1834,18 @@ if('serviceWorker' in navigator){
     <div class="modal-actions">
       <button class="btn btn-ghost btn-block" onclick="closeLogoutModal()">Batal</button>
       <button class="btn btn-red btn-block" onclick="confirmLogout()">Ya, Keluar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Cleanup all photos confirm modal -->
+<div class="modal-overlay" id="cleanupModal">
+  <div class="modal-sheet">
+    <h3>Bersihkan semua foto?</h3>
+    <p>Ini akan menghapus SEMUA foto (rumah, ruang tamu, KK, meteran) dari SEMUA keluarga di penyimpanan HP ini sekaligus — untuk membebaskan ruang penyimpanan. Data teks/angka tidak ikut terhapus. <b>Pastikan foto yang penting sudah diunduh & diupload ke FASIH dulu</b> — foto yang dihapus di sini tidak bisa dikembalikan.</p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost btn-block" onclick="closeCleanupModal()">Batal</button>
+      <button class="btn btn-red btn-block" onclick="confirmCleanup()">Ya, Hapus Semua Foto</button>
     </div>
   </div>
 </div>
