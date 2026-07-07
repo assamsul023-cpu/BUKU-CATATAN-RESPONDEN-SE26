@@ -1473,14 +1473,12 @@ function checkLicense(){
 function apiConfigured(){
   return LICENSE_API_URL.indexOf('GANTI_DENGAN') !== 0;
 }
-// Data yang dikirim ke server TIDAK menyertakan foto (base64 foto terlalu besar untuk disinkron).
-// Foto tetap tersimpan lokal di tiap perangkat dan harus diunduh/dipindah manual bila ganti perangkat.
+// Foto ikut disertakan saat sinkron (data disimpan sebagai file di Google Drive,
+// jadi kapasitasnya jauh lebih longgar dibanding sel Google Sheets).
+// Catatan: kalau foto menumpuk banyak & besar, proses sinkron bisa jadi lebih lambat
+// terutama di jaringan lambat — wajar, tunggu sampai selesai jangan ditutup aplikasinya.
 function householdsForSync(){
-  return households.map(h=>{
-    const copy = Object.assign({}, h);
-    delete copy.fotos;
-    return copy;
-  });
+  return households;
 }
 
 async function loginApp(){
@@ -1562,8 +1560,11 @@ async function manualSync(){
     alert('Anda belum login.');
     return;
   }
+  const btns = document.querySelectorAll('[onclick="manualSync()"]');
+  btns.forEach(b=>{ b.disabled = true; b.dataset.origText = b.textContent; b.textContent = '☁ Menyinkron...'; });
   const ok = await syncToServer();
-  alert(ok ? 'Data berhasil disinkronkan ke server.' : 'Sinkron gagal. Periksa koneksi internet.');
+  btns.forEach(b=>{ b.disabled = false; b.textContent = b.dataset.origText; });
+  alert(ok ? 'Data (termasuk foto) berhasil disinkronkan ke server.' : 'Sinkron gagal. Periksa koneksi internet. Kalau foto banyak & besar, coba lagi di jaringan yang lebih stabil.');
 }
 
 function openLogoutModal(){
@@ -1656,7 +1657,7 @@ if('serviceWorker' in navigator){
 <div class="modal-overlay" id="logoutModal">
   <div class="modal-sheet">
     <h3>Keluar dari akun?</h3>
-    <p>Data di perangkat ini akan disinkronkan ke server dulu, lalu kode aktivasi ini bisa dipakai login di perangkat lain. Data di perangkat ini tetap tersimpan di sini.</p>
+    <p>Data (termasuk foto) di perangkat ini akan disinkronkan ke server dulu — kalau foto banyak, proses ini bisa makan waktu, tunggu sampai selesai. Setelah itu kode aktivasi ini bisa dipakai login di perangkat lain lengkap dengan datanya. Data di perangkat ini tetap tersimpan di sini juga.</p>
     <div class="modal-actions">
       <button class="btn btn-ghost btn-block" onclick="closeLogoutModal()">Batal</button>
       <button class="btn btn-red btn-block" onclick="confirmLogout()">Ya, Keluar</button>
