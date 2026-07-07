@@ -891,25 +891,37 @@ function addAnggota(data){
   const div = document.createElement('div');
   div.className = 'member-card';
   div.dataset.aid = anggotaCounter;
+  const pekerjaanList = data && data.pekerjaan
+    ? (Array.isArray(data.pekerjaan) ? data.pekerjaan : [data.pekerjaan])
+    : [''];
+  const pekerjaanRowsHtml = pekerjaanList.map(p=>pekerjaanRowHtml(p)).join('');
   div.innerHTML = `
     <button class="remove-x" onclick="this.parentElement.remove()">✕</button>
     <div class="idx">Anggota ${wrap.children.length+1}</div>
     <label>Nama</label>
     <input type="text" class="ag-nama" placeholder="Nama anggota keluarga" value="${data&&data.nama?escapeAttr(data.nama):''}">
-    <div class="row2">
-      <div>
-        <label>Pekerjaan</label>
-        <input type="text" class="ag-pekerjaan" placeholder="cth. Petani" value="${data&&data.pekerjaan?escapeAttr(data.pekerjaan):''}">
-      </div>
-      <div>
-        <label>Pendapatan/bln (Rp)</label>
-        <input type="text" class="ag-pendapatan rp-input" placeholder="0" inputmode="numeric" value="${data&&data.pendapatan?Number(data.pendapatan).toLocaleString('id-ID'):''}">
-      </div>
-    </div>
+    <label>Pekerjaan (bisa lebih dari satu)</label>
+    <div class="pekerjaan-list">${pekerjaanRowsHtml}</div>
+    <button type="button" class="add-dashed" style="padding:8px; font-size:12px; margin-bottom:12px" onclick="addPekerjaanRow(this)">+ Tambah Pekerjaan Lain</button>
+    <label>Pendapatan/bln (Rp)</label>
+    <input type="text" class="ag-pendapatan rp-input" placeholder="0" inputmode="numeric" value="${data&&data.pendapatan?Number(data.pendapatan).toLocaleString('id-ID'):''}">
     <label>Penyakit / Riwayat Kesehatan (opsional)</label>
     <input type="text" class="ag-penyakit" placeholder="cth. Hipertensi, tidak ada, dll" value="${data&&data.penyakit?escapeAttr(data.penyakit):''}">
   `;
   wrap.appendChild(div);
+}
+function pekerjaanRowHtml(value){
+  return `
+    <div class="pekerjaan-row" style="display:flex; gap:6px; margin-bottom:8px;">
+      <input type="text" class="ag-pekerjaan-item" placeholder="cth. Petani" value="${value?escapeAttr(value):''}" style="flex:1">
+      <button type="button" class="btn btn-red btn-sm" style="padding:0 12px" onclick="this.parentElement.remove()">✕</button>
+    </div>`;
+}
+function addPekerjaanRow(btn){
+  const list = btn.previousElementSibling;
+  const div = document.createElement('div');
+  div.innerHTML = pekerjaanRowHtml('');
+  list.appendChild(div.firstElementChild);
 }
 function escapeAttr(s){ return String(s).replace(/"/g,'&quot;'); }
 
@@ -1194,7 +1206,7 @@ async function fillForm(h){
 function collectAnggota(){
   return [...document.querySelectorAll('#anggotaList .member-card')].map(el=>({
     nama: el.querySelector('.ag-nama').value.trim(),
-    pekerjaan: el.querySelector('.ag-pekerjaan').value.trim(),
+    pekerjaan: [...el.querySelectorAll('.ag-pekerjaan-item')].map(i=>i.value.trim()).filter(v=>v),
     pendapatan: parseRupiah(el.querySelector('.ag-pendapatan').value),
     penyakit: el.querySelector('.ag-penyakit').value.trim(),
   }));
@@ -1420,7 +1432,7 @@ function exportOne(id){
     : '  - Tidak ada';
   const totalKendaraan = (h.kendaraan||[]).reduce((s,k)=>s+(Number(k.harga)||0),0);
   const anggotaStr = (h.anggota||[]).length
-    ? h.anggota.map((a,i)=>`  ${i+1}. ${a.nama||'-'} | Pekerjaan: ${a.pekerjaan||'-'} | Pendapatan: ${fmtRp(a.pendapatan)} | Penyakit: ${a.penyakit||'-'}`).join('\n')
+    ? h.anggota.map((a,i)=>`  ${i+1}. ${a.nama||'-'} | Pekerjaan: ${(Array.isArray(a.pekerjaan)?a.pekerjaan.join(', '):a.pekerjaan)||'-'} | Pendapatan: ${fmtRp(a.pendapatan)} | Penyakit: ${a.penyakit||'-'}`).join('\n')
     : '  - Belum ada data anggota';
   const totalPendapatan = (h.anggota||[]).reduce((s,a)=>s+(Number(a.pendapatan)||0),0);
 
@@ -1517,7 +1529,7 @@ function exportCSV(){
       rows.push([
         i===0?h.nomorBangunan:'', i===0?h.nomorKeluarga:'',
         i===0?h.dusun:'', i===0?h.kepala:'', i===0?h.nomorWa:'',
-        a.nama, a.pekerjaan, a.pendapatan, a.penyakit,
+        a.nama, (Array.isArray(a.pekerjaan)?a.pekerjaan.join(', '):a.pekerjaan)||'', a.pendapatan, a.penyakit,
         i===0?h.idListrik:'', i===0?h.bayarListrik:'',
         i===0?h.makananMinggu:'', i===0?h.nonMakananBulan:'', i===0?h.nonMakananTahun:'',
         i===0?asetStr:'', i===0?h.aset:'', i===0?kendaraanStr:'', i===0?h.luasRumah:'',
