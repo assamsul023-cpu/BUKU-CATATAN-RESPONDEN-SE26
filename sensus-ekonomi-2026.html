@@ -1625,11 +1625,12 @@ async function distributePhotosAndStrip(householdsArr){
       try{
         await Promise.all(Object.keys(copy.fotos).map(key=>savePhotoToDB(copy.id, key, copy.fotos[key])));
         copy.fotoKeys = Object.keys(copy.fotos);
+        delete copy.fotos; // hanya dihapus SETELAH benar-benar berhasil dipindah ke IndexedDB
       }catch(e){
-        copy.fotoKeys = copy.fotoKeys || [];
+        // gagal dipindah -> JANGAN hapus, biarkan data lama tetap utuh supaya bisa dicoba lagi nanti
+        console.log('Gagal memindahkan foto untuk', copy.id, e);
       }
     }
-    delete copy.fotos;
     return copy;
   }));
 }
