@@ -1,0 +1,25 @@
+{
+  "name": "Buku Responden - Sensus Ekonomi 2026",
+  "short_name": "SE2026",
+  "description": "Aplikasi pendataan lapangan Sensus Ekonomi 2026 (BPS)",
+  "start_url": "./sensus-ekonomi-2026.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0F1B2D",
+  "theme_color": "#0F1B2D",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

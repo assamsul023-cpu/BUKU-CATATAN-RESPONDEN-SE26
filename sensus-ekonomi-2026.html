@@ -1,0 +1,1668 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Sensus Ekonomi 2026 — Buku Lapangan</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0F1B2D">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SE2026">
+<style>
+  :root{
+    --bg:#0F1B2D;
+    --bg-alt:#0B1522;
+    --surface:#16273D;
+    --surface-2:#1D3049;
+    --line:#2A3F5C;
+    --paper:#EDE6D6;
+    --paper-dim:#A9B4C4;
+    --amber:#C98A3E;
+    --amber-bright:#E0A65B;
+    --teal:#4A9B7F;
+    --red:#C1554A;
+    --font-display:'Spectral', Georgia, serif;
+    --font-body:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-mono:'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(1200px 600px at 100% -10%, rgba(201,138,62,0.08), transparent 60%),
+      var(--bg);
+    color:var(--paper);
+    font-family:var(--font-body);
+    min-height:100vh;
+    padding-bottom:100px;
+  }
+  ::selection{background:var(--amber); color:#1a1005;}
+
+  /* ---- Header / Logbook masthead ---- */
+  header.masthead{
+    padding:22px 18px 16px;
+    background:linear-gradient(180deg, var(--bg-alt), transparent);
+    border-bottom:1px solid var(--line);
+    position:relative;
+  }
+  .eyebrow{
+    font-family:var(--font-mono);
+    font-size:11px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--amber-bright);
+    display:flex; align-items:center; gap:8px;
+  }
+  .eyebrow::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--teal);box-shadow:0 0 8px var(--teal);}
+  h1.title{
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:26px;
+    margin:4px 0 2px;
+    letter-spacing:.01em;
+  }
+  .subtitle{color:var(--paper-dim); font-size:13px;}
+  .stamp-count{
+    position:absolute; top:18px; right:16px;
+    text-align:right;
+    font-family:var(--font-mono);
+  }
+  .stamp-count .num{font-size:22px; color:var(--amber-bright); line-height:1;}
+  .stamp-count .lbl{font-size:9px; color:var(--paper-dim); text-transform:uppercase; letter-spacing:.1em;}
+
+  /* ---- Views ---- */
+  .view{padding:16px; display:none;}
+  .view.active{display:block;}
+
+  /* ---- List view ---- */
+  .toolbar{display:flex; gap:8px; margin-bottom:14px;}
+  input[type=search]{
+    flex:1; background:var(--surface); border:1px solid var(--line); color:var(--paper);
+    padding:11px 14px; border-radius:10px; font-size:14px; font-family:var(--font-body);
+  }
+  input[type=search]:focus{outline:none; border-color:var(--amber);}
+  .btn{
+    border:none; border-radius:10px; padding:11px 16px; font-size:14px; font-weight:600;
+    font-family:var(--font-body); cursor:pointer; transition:transform .08s ease, opacity .15s;
+    display:inline-flex; align-items:center; gap:6px; justify-content:center;
+  }
+  .btn:active{transform:scale(0.96);}
+  .btn-primary{background:var(--amber); color:#1a1005;}
+  .btn-ghost{background:var(--surface); color:var(--paper); border:1px solid var(--line);}
+  .btn-teal{background:var(--teal); color:#06231a;}
+  .btn-red{background:transparent; color:var(--red); border:1px solid rgba(193,85,74,.4);}
+  .btn-block{width:100%;}
+  .btn-sm{padding:8px 12px; font-size:12.5px;}
+
+  .empty{
+    text-align:center; padding:60px 20px; color:var(--paper-dim);
+  }
+  .empty .glyph{font-size:38px; margin-bottom:10px; opacity:.6;}
+  .empty p{font-size:13.5px; line-height:1.6;}
+
+  .card-list{display:flex; flex-direction:column; gap:10px;}
+  .card{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:14px 16px;
+    position:relative;
+    overflow:hidden;
+  }
+  .card::before{
+    content:'';
+    position:absolute; left:0; top:0; bottom:0; width:4px;
+    background:var(--amber);
+  }
+  .card-row{display:flex; justify-content:space-between; align-items:flex-start; gap:10px;}
+  .card-title{font-family:var(--font-display); font-size:17px; font-weight:600;}
+  .card-sub{font-size:12px; color:var(--paper-dim); margin-top:2px;}
+  .card-meta{
+    display:flex; gap:14px; margin-top:10px; font-family:var(--font-mono); font-size:11.5px; color:var(--paper-dim);
+  }
+  .card-meta b{color:var(--amber-bright); font-weight:600;}
+  .card-actions{display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;}
+  .card-actions .btn{flex:1 1 auto; min-width:70px;}
+
+  /* ---- Form view ---- */
+  .progress-rail{
+    display:flex; gap:4px; margin-bottom:18px; position:sticky; top:0; z-index:5;
+    padding:10px 0; background:var(--bg);
+  }
+  .progress-rail .seg{flex:1; height:3px; border-radius:2px; background:var(--line);}
+  .progress-rail .seg.done{background:var(--amber);}
+
+  .section{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:14px;
+    margin-bottom:12px;
+    overflow:hidden;
+  }
+  .section-head{
+    display:flex; align-items:center; gap:12px;
+    padding:14px 16px; cursor:pointer;
+  }
+  .section-head .qnum{
+    font-family:var(--font-mono); font-size:12px; color:#1a1005;
+    background:var(--amber); width:26px; height:26px; border-radius:7px;
+    display:flex; align-items:center; justify-content:center; flex-shrink:0; font-weight:700;
+  }
+  .section-head .qtitle{font-size:14.5px; font-weight:600; flex:1;}
+  .section-head .chev{color:var(--paper-dim); transition:transform .2s; font-size:12px;}
+  .section.open .chev{transform:rotate(180deg);}
+  .section-body{
+    padding:0 16px 16px; display:none;
+  }
+  .section.open .section-body{display:block;}
+
+  label{
+    display:block; font-size:11.5px; color:var(--paper-dim); margin:12px 0 6px;
+    text-transform:uppercase; letter-spacing:.05em;
+  }
+  label:first-child{margin-top:0;}
+  input[type=text], input[type=number], textarea, select{
+    width:100%; background:var(--surface-2); border:1px solid var(--line); color:var(--paper);
+    padding:12px 13px; border-radius:9px; font-size:15px; font-family:var(--font-body);
+  }
+  input[type=number]{font-family:var(--font-mono);}
+  input.rp-input{font-family:var(--font-mono); font-weight:700; letter-spacing:.02em; color:var(--amber-bright);}
+  input:focus, textarea:focus, select:focus{outline:none; border-color:var(--amber);}
+  textarea{resize:vertical; min-height:44px;}
+  .row2{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .hint{font-size:11px; color:var(--paper-dim); margin-top:5px;}
+
+  .member-card, .kendaraan-card{
+    background:var(--bg-alt); border:1px solid var(--line); border-radius:10px;
+    padding:12px; margin-bottom:10px; position:relative;
+  }
+  .member-card .idx, .kendaraan-card .idx{
+    font-family:var(--font-mono); font-size:10px; color:var(--amber-bright);
+    text-transform:uppercase; letter-spacing:.08em;
+  }
+  .remove-x{
+    position:absolute; top:10px; right:10px; background:none; border:none;
+    color:var(--paper-dim); font-size:18px; cursor:pointer; line-height:1; padding:4px;
+  }
+  .add-dashed{
+    width:100%; padding:12px; border:1.5px dashed var(--line); border-radius:10px;
+    background:transparent; color:var(--amber-bright); font-size:13.5px; font-weight:600;
+    cursor:pointer; margin-top:4px;
+  }
+
+  .summary-strip{
+    display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:14px 0 18px;
+  }
+  .sum-box{
+    background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:12px 14px;
+  }
+  .sum-box .lbl{font-size:10.5px; color:var(--paper-dim); text-transform:uppercase; letter-spacing:.06em;}
+  .sum-box .val{font-family:var(--font-mono); font-size:18px; color:var(--amber-bright); margin-top:3px;}
+  .sum-box.teal .val{color:var(--teal);}
+
+  /* ---- Sticky bottom bar ---- */
+  .bottombar{
+    position:fixed; bottom:0; left:0; right:0;
+    background:var(--bg-alt); border-top:1px solid var(--line);
+    padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+    display:flex; gap:10px; z-index:10;
+  }
+  .save-indicator{
+    font-family:var(--font-mono); font-size:10.5px; color:var(--teal); text-align:center; margin-top:6px;
+    opacity:0; transition:opacity .3s;
+  }
+  .save-indicator.show{opacity:1;}
+
+  .fab{
+    position:fixed; bottom:24px; right:18px; width:56px; height:56px; border-radius:16px;
+    background:var(--amber); color:#1a1005; border:none; font-size:26px; font-weight:300;
+    box-shadow:0 8px 24px rgba(201,138,62,.35); cursor:pointer; z-index:10;
+  }
+
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(11,21,34,.75); backdrop-filter:blur(3px);
+    display:none; align-items:flex-end; z-index:20;
+  }
+  .modal-overlay.show{display:flex;}
+  .modal-sheet{
+    background:var(--surface); width:100%; border-radius:18px 18px 0 0; padding:22px 18px calc(22px + env(safe-area-inset-bottom));
+    border-top:1px solid var(--line);
+  }
+  .modal-sheet h3{font-family:var(--font-display); margin:0 0 6px;}
+  .modal-sheet p{color:var(--paper-dim); font-size:13px; line-height:1.6; margin:0 0 18px;}
+  .modal-actions{display:flex; gap:10px;}
+
+  ::-webkit-scrollbar{width:0;}
+
+  /* ---- License lock screen ---- */
+  .lock-overlay{
+    position:fixed; inset:0; z-index:999;
+    background:
+      radial-gradient(1000px 500px at 100% -10%, rgba(201,138,62,0.10), transparent 60%),
+      var(--bg);
+    display:flex; align-items:center; justify-content:center;
+    padding:24px;
+  }
+  .lock-card{max-width:400px; width:100%;}
+  .lock-card .eyebrow{justify-content:center; margin-bottom:6px;}
+  .lock-card h2{
+    font-family:var(--font-display); font-size:22px; text-align:center; margin:0 0 6px;
+  }
+  .lock-card .desc{color:var(--paper-dim); font-size:13px; text-align:center; line-height:1.6; margin-bottom:22px;}
+  .deviceid-box{
+    background:var(--surface); border:1px solid var(--line); border-radius:12px;
+    padding:14px; margin-bottom:16px;
+  }
+  .deviceid-box .lbl{font-size:10.5px; color:var(--paper-dim); text-transform:uppercase; letter-spacing:.08em; margin-bottom:6px;}
+  .deviceid-box .idval{
+    font-family:var(--font-mono); font-size:15px; color:var(--amber-bright);
+    word-break:break-all; user-select:all;
+  }
+  .deviceid-box .copybtn{
+    margin-top:10px; width:100%; padding:9px; border-radius:8px; border:1px solid var(--line);
+    background:var(--surface-2); color:var(--paper); font-size:12.5px; cursor:pointer;
+  }
+  .lock-status{
+    font-size:12.5px; text-align:center; margin-top:10px; min-height:16px;
+  }
+  .lock-status.err{color:var(--red);}
+  .lock-status.ok{color:var(--teal);}
+  .lock-spinner{
+    display:inline-block; width:13px; height:13px; border:2px solid var(--line);
+    border-top-color:var(--amber); border-radius:50%; animation:spin .7s linear infinite;
+    vertical-align:middle; margin-right:6px;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  /* ---- Foto dokumentasi ---- */
+  .foto-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .foto-slot{display:flex; flex-direction:column; gap:6px;}
+  .foto-label{font-size:10px; color:var(--paper-dim); text-align:center; line-height:1.3; min-height:26px;}
+  .foto-box{
+    aspect-ratio:3/4; border-radius:10px; border:1.5px dashed var(--line);
+    background:var(--bg-alt); display:flex; align-items:center; justify-content:center;
+    cursor:pointer; overflow:hidden; position:relative;
+  }
+  .foto-placeholder{
+    text-align:center; font-size:20px; color:var(--paper-dim); line-height:1.6;
+  }
+  .foto-placeholder br + *{font-size:9px;}
+  .foto-preview{width:100%; height:100%; object-fit:cover;}
+  .foto-actions{display:flex; gap:4px;}
+  .foto-actions .btn{flex:1; padding:6px 4px; font-size:10px;}
+
+  /* ---- Prelist ---- */
+  .prelist-header{padding:6px 2px 14px;}
+  .prelist-title{font-family:var(--font-display); font-size:20px; margin:0 0 4px;}
+  .prelist-sub{font-size:12px; color:var(--paper-dim);}
+  .prelist-table-wrap{
+    background:var(--surface); border:1px solid var(--line); border-radius:12px;
+    overflow-x:auto; -webkit-overflow-scrolling:touch;
+  }
+  .prelist-table{width:100%; border-collapse:collapse; font-size:13px; min-width:480px;}
+  .prelist-table th{
+    text-align:left; font-family:var(--font-mono); font-size:10.5px; text-transform:uppercase;
+    letter-spacing:.05em; color:var(--paper-dim); padding:10px 12px; border-bottom:1px solid var(--line);
+    white-space:nowrap;
+  }
+  .prelist-table td{
+    padding:10px 12px; border-bottom:1px solid var(--line); white-space:nowrap;
+  }
+  .prelist-table tr:last-child td{border-bottom:none;}
+  .prelist-table td:first-child{font-family:var(--font-mono); color:var(--paper-dim); width:1%;}
+  .prelist-table td:nth-child(2){font-weight:600; white-space:normal; min-width:140px;}
+  .prelist-table td:nth-child(3), .prelist-table td:nth-child(4){font-family:var(--font-mono); color:var(--amber-bright);}
+
+  @media print{
+    body *{visibility:hidden;}
+    #prelistView, #prelistView *{visibility:visible;}
+    #prelistView{position:absolute; left:0; top:0; width:100%; padding:0;}
+    .prelist-table-wrap{border:none; background:none;}
+    .prelist-table th, .prelist-table td{border-bottom:1px solid #999; color:#000;}
+    .prelist-title, .prelist-sub{color:#000;}
+    .bottombar, .fab{display:none !important;}
+  }
+  @media (max-width:360px){
+    .foto-grid{grid-template-columns:1fr 1fr; gap:8px;}
+    .foto-label{font-size:9px;}
+  }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="eyebrow">Sensus Ekonomi 2026 · Lapangan</div>
+  <h1 class="title">Buku Responden</h1>
+  <div class="subtitle" id="dusunSubtitle">Belum ada dusun aktif</div>
+  <div class="stamp-count">
+    <div class="num" id="totalCount">0</div>
+    <div class="lbl">Responden</div>
+  </div>
+</header>
+
+<!-- LIST VIEW -->
+<div class="view active" id="listView">
+  <div class="hint" style="margin-bottom:10px">Terurut otomatis berdasarkan No. Bangunan → No. Keluarga · Unduh &amp; hapus foto secara berkala agar penyimpanan HP tidak penuh</div>
+  <div class="toolbar">
+    <input type="search" id="searchBox" placeholder="Cari nama kepala keluarga / dusun...">
+    <button class="btn btn-ghost btn-sm" id="exportBtn">⇩ Export</button>
+    <button class="btn btn-ghost btn-sm" id="importBtn">⇧ Muat</button>
+    <input type="file" id="importFile" accept="application/json" style="display:none">
+  </div>
+  <div class="toolbar" style="margin-top:-4px">
+    <button class="btn btn-ghost btn-sm" style="flex:1" onclick="manualSync()">☁ Sinkron Sekarang</button>
+    <button class="btn btn-ghost btn-sm" style="flex:1" onclick="openPrelist()">📋 Prelist</button>
+    <button class="btn btn-ghost btn-sm" style="flex:1" onclick="openLogoutModal()">⏻ Keluar</button>
+  </div>
+
+  <div id="emptyState" class="empty" style="display:none">
+    <div class="glyph">📋</div>
+    <p>Belum ada data responden.<br>Ketuk tombol + untuk mulai mendata keluarga pertama.</p>
+  </div>
+
+  <div class="card-list" id="cardList"></div>
+</div>
+
+<!-- FORM VIEW -->
+<div class="view" id="formView">
+  <div class="progress-rail" id="progressRail"></div>
+
+  <!-- Section 0: Identitas -->
+  <div class="section open" data-sec="0">
+    <div class="section-head" onclick="toggleSection(0)">
+      <div class="qtitle">Identitas Keluarga & Dusun</div>
+      <div class="chev">▾</div>
+    </div>
+    <div class="section-body">
+      <div class="row2">
+        <div>
+          <label>Nomor Bangunan</label>
+          <input type="text" id="f_nomorBangunan" placeholder="cth. 001" inputmode="numeric">
+        </div>
+        <div>
+          <label>Nomor Keluarga</label>
+          <input type="text" id="f_nomorKeluarga" placeholder="cth. 01" inputmode="numeric">
+        </div>
+      </div>
+      <label>Nama Kepala Keluarga</label>
+      <input type="text" id="f_kepala" placeholder="cth. Budi Santoso">
+      <label>Nomor WA</label>
+      <input type="text" id="f_nomorWa" placeholder="cth. 08123456789" inputmode="tel">
+      <label>Dusun / Lingkungan</label>
+      <input type="text" id="f_dusun" placeholder="cth. Dusun Kartika" list="dusunList">
+      <datalist id="dusunList"></datalist>
+    </div>
+  </div>
+
+  <!-- Section 1&2: Anggota Keluarga -->
+  <div class="section" data-sec="1">
+    <div class="section-head" onclick="toggleSection(1)">
+      <div class="qnum">1–2</div>
+      <div class="qtitle">Pekerjaan & Pendapatan Anggota</div>
+      <div class="chev">▾</div>
+    </div>
+    <div class="section-body">
+      <div id="anggotaList"></div>
+      <button class="add-dashed" onclick="addAnggota()">+ Tambah Anggota Keluarga</button>
+    </div>
+  </div>
+
+  <!-- Section 3: Listrik -->
+  <div class="section" data-sec="2">
+    <div class="section-head" onclick="toggleSection(2)">
+      <div class="qnum">3</div>
+      <div class="qtitle">Listrik</div>
+      <div class="chev">▾</div>
+    </div>
+    <div class="section-body">
+      <label>ID Pelanggan Listrik</label>
+      <input type="text" id="f_idListrik" placeholder="cth. 5312xxxxxxx">
+      <label>Pembayaran Listrik / Bulan (Rp)</label>
+      <input type="text" id="f_bayarListrik" class="rp-input" placeholder="0" inputmode="numeric">
+    </div>
+  </div>
+
+  <!-- Section 4-6: Pengeluaran -->
+  <div class="section" data-sec="3">
+    <div class="section-head" onclick="toggleSection(3)">
+      <div class="qnum">4–6</div>
+      <div class="qtitle">Pengeluaran Rumah Tangga</div>
+      <div class="chev">▾</div>
+    </div>
+    <div class="section-body">
+      <label>Pengeluaran Makanan / Minggu (Rp)</label>
+      <input type="text" id="f_makananMinggu" class="rp-input" placeholder="0" inputmode="numeric">
+      <label>Pengeluaran Non-Makanan / Bulan (Rp)</label>
+      <input type="text" id="f_nonMakananBulan" class="rp-input" placeholder="0" inputmode="numeric">
+      <label>Pengeluaran Non-Makanan / Tahun (Rp)</label>
+      <input type="text" id="f_nonMakananTahun" class="rp-input" placeholder="0" inputmode="numeric">
+    </div>
+  </div>
+
+  <!-- Section 7-9: Aset -->
+  <div class="section" data-sec="4">
+    <div class="section-head" onclick="toggleSection(4)">
+      <div class="qnum">7–9</div>
+      <div class="qtitle">Aset, Kendaraan & Luas Rumah</div>
+      <div class="chev">▾</div>
+    </div>
+    <div class="section-body">
+      <label>Aset Selain Rumah</label>
+      <div id="asetList"></div>
+      <button class="add-dashed" onclick="addAset()">+ Tambah Aset</button>
+      <div class="hint" id="totalAsetHint">Total nilai aset: Rp 0</div>
+
+      <label>Luas Rumah (m²)</label>
+      <input type="number" id="f_luasRumah" placeholder="0" inputmode="numeric">
+
+      <label>Kendaraan</label>
+      <div id="kendaraanList"></div>
+      <button class="add-dashed" onclick="addKendaraan()">+ Tambah Kendaraan</button>
+      <div class="hint" id="totalKendaraanHint">Total nilai kendaraan: Rp 0</div>
+    </div>
+  </div>
+
+  <!-- Section 10: Usaha -->
+  <div class="section" data-sec="5">
+    <div class="section-head" onclick="toggleSection(5)">
+      <div class="qnum">10</div>
+      <div class="qtitle">Usaha, Modal & Laba</div>
+      <div class="chev">▾</div>
+    </div>
+    <div class="section-body">
+      <label>Nama / Jenis Usaha (kosongkan bila tidak ada)</label>
+      <input type="text" id="f_namaUsaha" placeholder="cth. Warung Kelontong">
+
+      <label>Rincian Modal Usaha (apa saja & harganya)</label>
+      <div id="modalUsahaList"></div>
+      <button class="add-dashed" onclick="addModalUsaha()">+ Tambah Rincian Modal</button>
+      <div class="hint" id="totalModalUsahaHint">Total modal usaha: Rp 0</div>
+
+      <div class="row2">
+        <div>
+          <label>Gaji Karyawan / Bulan (Rp)</label>
+          <input type="text" id="f_gajiKaryawan" class="rp-input" placeholder="0" inputmode="numeric">
+        </div>
+        <div>
+          <label>Laba / Bulan (Rp)</label>
+          <input type="text" id="f_labaUsaha" class="rp-input" placeholder="0" inputmode="numeric">
+        </div>
+      </div>
+
+      <label>Aset Usaha (peralatan, mesin, inventaris, dll)</label>
+      <div id="asetUsahaList"></div>
+      <button class="add-dashed" onclick="addAsetUsaha()">+ Tambah Aset Usaha</button>
+      <div class="hint" id="totalAsetUsahaHint">Total nilai aset usaha: Rp 0</div>
+    </div>
+  </div>
+
+  <!-- Section 11: Kesehatan -->
+  <div class="section" data-sec="6">
+    <div class="section-head" onclick="toggleSection(6)">
+      <div class="qnum">11</div>
+      <div class="qtitle">Riwayat Penyakit Anggota Keluarga</div>
+      <div class="chev">▾</div>
+    </div>
+    <div class="section-body">
+      <label>Catatan Kesehatan (opsional, sudah tercatat per-anggota di atas)</label>
+      <textarea id="f_catatanKesehatan" placeholder="Catatan tambahan bila diperlukan..."></textarea>
+    </div>
+  </div>
+
+  <!-- Section: Foto Dokumentasi -->
+  <div class="section" data-sec="7">
+    <div class="section-head" onclick="toggleSection(7)">
+      <div class="qnum">📷</div>
+      <div class="qtitle">Foto Dokumentasi (untuk upload FASIH)</div>
+      <div class="chev">▾</div>
+    </div>
+    <div class="section-body">
+      <div class="foto-grid">
+        <div class="foto-slot" id="slot_depan">
+          <div class="foto-label">Rumah Tampak Depan</div>
+          <div class="foto-box" onclick="triggerFoto('depan')">
+            <div class="foto-placeholder">📷<br>Ambil Foto</div>
+            <img class="foto-preview" style="display:none">
+          </div>
+          <div class="foto-actions" style="display:none">
+            <button class="btn btn-ghost btn-sm" onclick="triggerFoto('depan')">Ganti</button>
+            <button class="btn btn-red btn-sm" onclick="removeFoto('depan')">Hapus</button>
+          </div>
+          <input type="file" accept="image/*" capture="environment" id="input_depan" style="display:none">
+        </div>
+
+        <div class="foto-slot" id="slot_ruangtamu">
+          <div class="foto-label">Ruang Tamu</div>
+          <div class="foto-box" onclick="triggerFoto('ruangtamu')">
+            <div class="foto-placeholder">📷<br>Ambil Foto</div>
+            <img class="foto-preview" style="display:none">
+          </div>
+          <div class="foto-actions" style="display:none">
+            <button class="btn btn-ghost btn-sm" onclick="triggerFoto('ruangtamu')">Ganti</button>
+            <button class="btn btn-red btn-sm" onclick="removeFoto('ruangtamu')">Hapus</button>
+          </div>
+          <input type="file" accept="image/*" capture="environment" id="input_ruangtamu" style="display:none">
+        </div>
+
+        <div class="foto-slot" id="slot_kk">
+          <div class="foto-label">Foto KK (Kartu Keluarga)</div>
+          <div class="foto-box" onclick="triggerFoto('kk')">
+            <div class="foto-placeholder">📷<br>Ambil Foto</div>
+            <img class="foto-preview" style="display:none">
+          </div>
+          <div class="foto-actions" style="display:none">
+            <button class="btn btn-ghost btn-sm" onclick="triggerFoto('kk')">Ganti</button>
+            <button class="btn btn-red btn-sm" onclick="removeFoto('kk')">Hapus</button>
+          </div>
+          <input type="file" accept="image/*" capture="environment" id="input_kk" style="display:none">
+        </div>
+
+        <div class="foto-slot" id="slot_meteran">
+          <div class="foto-label">Foto Meteran (Listrik)</div>
+          <div class="foto-box" onclick="triggerFoto('meteran')">
+            <div class="foto-placeholder">📷<br>Ambil Foto</div>
+            <img class="foto-preview" style="display:none">
+          </div>
+          <div class="foto-actions" style="display:none">
+            <button class="btn btn-ghost btn-sm" onclick="triggerFoto('meteran')">Ganti</button>
+            <button class="btn btn-red btn-sm" onclick="removeFoto('meteran')">Hapus</button>
+          </div>
+          <input type="file" accept="image/*" capture="environment" id="input_meteran" style="display:none">
+        </div>
+      </div>
+      <div class="hint">Foto otomatis dikompres agar hemat penyimpanan. Bisa diunduh satu-satu dari daftar responden untuk diunggah ke FASIH.</div>
+    </div>
+  </div>
+
+  <div class="summary-strip">
+    <div class="sum-box">
+      <div class="lbl">Total Pendapatan/bln</div>
+      <div class="val" id="sumPendapatan">Rp 0</div>
+    </div>
+    <div class="sum-box teal">
+      <div class="lbl">Total Pengeluaran/bln (est.)</div>
+      <div class="val" id="sumPengeluaran">Rp 0</div>
+    </div>
+  </div>
+
+  <div style="height:70px"></div>
+</div>
+
+<!-- PRELIST VIEW -->
+<div class="view" id="prelistView">
+  <div class="prelist-header">
+    <h2 class="prelist-title">Prelist Responden</h2>
+    <div class="prelist-sub">Terurut berdasarkan Nomor Bangunan → Nomor Keluarga</div>
+  </div>
+  <div class="prelist-table-wrap">
+    <table class="prelist-table" id="prelistTable">
+      <thead>
+        <tr>
+          <th>No</th>
+          <th>Nama Kepala Keluarga</th>
+          <th>No. Bangunan</th>
+          <th>No. Keluarga</th>
+        </tr>
+      </thead>
+      <tbody id="prelistBody"></tbody>
+    </table>
+  </div>
+  <div style="height:80px"></div>
+</div>
+
+<!-- Sticky bottom bar (prelist) -->
+<div class="bottombar" id="prelistBar" style="display:none">
+  <button class="btn btn-ghost" onclick="backToList()">← Kembali</button>
+  <button class="btn btn-ghost" onclick="printPrelist()">🖨 Cetak</button>
+  <button class="btn btn-primary btn-block" onclick="downloadPrelist()">⇩ Unduh</button>
+</div>
+
+<!-- Sticky bottom bar (form) -->
+<div class="bottombar" id="formBar" style="display:none">
+  <button class="btn btn-ghost" onclick="backToList()">← Kembali</button>
+  <button class="btn btn-primary btn-block" onclick="saveHousehold()">✓ Simpan Data</button>
+</div>
+
+<!-- FAB (list view) -->
+<button class="fab" id="fab" onclick="newHousehold()">+</button>
+
+<!-- Import confirm modal -->
+<div class="modal-overlay" id="importModal">
+  <div class="modal-sheet">
+    <h3 id="importTitle">Muat file backup</h3>
+    <p id="importDesc">Ditemukan <b id="importCount">0</b> data keluarga di file ini. Pilih cara memuatnya ke penyimpanan HP.</p>
+    <div class="modal-actions" style="flex-direction:column">
+      <button class="btn btn-primary btn-block" onclick="doImport('merge')">Gabungkan dengan data yang ada</button>
+      <button class="btn btn-red btn-block" style="margin-top:8px" onclick="doImport('replace')">Timpa semua data yang ada</button>
+      <button class="btn btn-ghost btn-block" style="margin-top:8px" onclick="closeImportModal()">Batal</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete confirm modal -->
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal-sheet">
+    <h3>Hapus data ini?</h3>
+    <p>Data keluarga yang sudah dihapus tidak dapat dikembalikan. Pastikan sudah export/backup bila diperlukan.</p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost btn-block" onclick="closeDeleteModal()">Batal</button>
+      <button class="btn btn-red btn-block" style="border-color:var(--red)" onclick="confirmDelete()">Hapus</button>
+    </div>
+  </div>
+</div>
+
+<div class="save-indicator" id="saveIndicator">✓ Tersimpan otomatis di perangkat ini</div>
+
+<script>
+const STORAGE_KEY = 'sensus2026_households_v1';
+let households = [];
+let currentId = null;
+let deleteTargetId = null;
+let openSections = new Set([0]);
+
+function loadData(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    households = raw ? JSON.parse(raw) : [];
+  }catch(e){ households = []; }
+}
+function persist(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(households));
+    const ind = document.getElementById('saveIndicator');
+    ind.classList.add('show');
+    clearTimeout(window._si);
+    window._si = setTimeout(()=>ind.classList.remove('show'), 1600);
+  }catch(e){
+    alert('Gagal menyimpan ke perangkat. Penyimpanan mungkin penuh.');
+  }
+}
+
+function fmtRp(n){
+  n = Number(n)||0;
+  return 'Rp ' + n.toLocaleString('id-ID');
+}
+function parseRupiah(v){
+  return Number(String(v||'').replace(/\./g,'').replace(/[^0-9]/g,'')) || 0;
+}
+function formatRupiahInput(el){
+  const raw = String(el.value||'').replace(/[^0-9]/g,'');
+  el.value = raw ? Number(raw).toLocaleString('id-ID') : '';
+}
+document.addEventListener('input', function(e){
+  if(e.target.classList && e.target.classList.contains('rp-input')){
+    formatRupiahInput(e.target);
+  }
+});
+
+function toNum(v){
+  const n = parseFloat(String(v||'').replace(/[^0-9.]/g,''));
+  return isNaN(n) ? Infinity : n;
+}
+function sortByBangunanKeluarga(a,b){
+  const ba = toNum(a.nomorBangunan), bb = toNum(b.nomorBangunan);
+  if(ba !== bb) return ba - bb;
+  const ka = toNum(a.nomorKeluarga), kb = toNum(b.nomorKeluarga);
+  if(ka !== kb) return ka - kb;
+  return (a.kepala||'').localeCompare(b.kepala||'', 'id');
+}
+
+/* ---------- List view ---------- */
+function renderList(){
+  const q = document.getElementById('searchBox').value.trim().toLowerCase();
+  const list = document.getElementById('cardList');
+  const empty = document.getElementById('emptyState');
+  document.getElementById('totalCount').textContent = households.length;
+
+  const dusuns = [...new Set(households.map(h=>h.dusun).filter(Boolean))];
+  document.getElementById('dusunSubtitle').textContent = dusuns.length
+    ? dusuns.length + ' dusun terdata: ' + dusuns.slice(0,3).join(', ') + (dusuns.length>3?'...':'')
+    : 'Belum ada dusun aktif';
+
+  const filtered = households
+    .slice()
+    .sort(sortByBangunanKeluarga)
+    .filter(h => !q || (h.kepala||'').toLowerCase().includes(q) || (h.dusun||'').toLowerCase().includes(q));
+
+  if(households.length === 0){
+    empty.style.display = 'block';
+    list.innerHTML = '';
+    return;
+  }
+  empty.style.display = 'none';
+
+  list.innerHTML = filtered.map(h=>{
+    const totalPendapatan = (h.anggota||[]).reduce((s,a)=>s+(Number(a.pendapatan)||0),0);
+    const jmlAnggota = (h.anggota||[]).length;
+    return `
+    <div class="card">
+      <div class="card-row">
+        <div>
+          <div class="card-title">${escapeHtml(h.kepala||'(Tanpa nama)')}</div>
+          <div class="card-sub">Bgn ${escapeHtml(h.nomorBangunan||'-')} / KK ${escapeHtml(h.nomorKeluarga||'-')} · ${escapeHtml(h.dusun||'-')} · ${jmlAnggota} anggota</div>
+        </div>
+      </div>
+      <div class="card-meta">
+        <div>Pendapatan <b>${fmtRp(totalPendapatan)}</b></div>
+        ${h.namaUsaha ? `<div>Usaha <b>${escapeHtml(h.namaUsaha)}</b></div>` : ''}
+      </div>
+      <div class="card-meta" style="margin-top:4px">
+        <div>Didata <b>${fmtDate(h.createdAt)}</b></div>
+        ${h.updatedAt && h.updatedAt!==h.createdAt ? `<div>Diubah <b>${fmtDate(h.updatedAt)}</b></div>` : ''}
+      </div>
+      <div class="card-actions">
+        <button class="btn btn-ghost btn-sm" onclick="openHousehold('${h.id}')">✎ Edit</button>
+        <button class="btn btn-ghost btn-sm" onclick="duplicateHousehold('${h.id}')">⧉ Duplikat</button>
+        <button class="btn btn-teal btn-sm" onclick="exportOne('${h.id}')">⇩ Unduh</button>
+        ${h.fotos && Object.keys(h.fotos).length ? `<button class="btn btn-teal btn-sm" onclick="downloadFotos('${h.id}')">📷 Foto (${Object.keys(h.fotos).length})</button>` : ''}
+        <button class="btn btn-red btn-sm" onclick="askDelete('${h.id}')">✕ Hapus</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function fmtDate(ts){
+  if(!ts) return '-';
+  const d = new Date(ts);
+  return d.toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'}) + ' ' + d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+}
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+document.getElementById('searchBox').addEventListener('input', renderList);
+
+/* ---------- Navigation ---------- */
+function showView(name){
+  document.getElementById('listView').classList.toggle('active', name==='list');
+  document.getElementById('formView').classList.toggle('active', name==='form');
+  document.getElementById('prelistView').classList.toggle('active', name==='prelist');
+  document.getElementById('formBar').style.display = name==='form' ? 'flex' : 'none';
+  document.getElementById('prelistBar').style.display = name==='prelist' ? 'flex' : 'none';
+  document.getElementById('fab').style.display = name==='list' ? 'block' : 'none';
+}
+
+function openPrelist(){
+  const sorted = households.slice().sort(sortByBangunanKeluarga);
+  const tbody = document.getElementById('prelistBody');
+  if(sorted.length === 0){
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--paper-dim); padding:24px;">Belum ada data responden.</td></tr>`;
+  }else{
+    tbody.innerHTML = sorted.map((h,i)=>`
+      <tr>
+        <td>${i+1}</td>
+        <td>${escapeHtml(h.kepala||'(Tanpa nama)')}</td>
+        <td>${escapeHtml(h.nomorBangunan||'-')}</td>
+        <td>${escapeHtml(h.nomorKeluarga||'-')}</td>
+      </tr>`).join('');
+  }
+  showView('prelist');
+  window.scrollTo(0,0);
+}
+function printPrelist(){
+  window.print();
+}
+function downloadPrelist(){
+  const sorted = households.slice().sort(sortByBangunanKeluarga);
+  if(sorted.length === 0){ alert('Belum ada data responden untuk dibuat prelist.'); return; }
+  const headers = ['No','Nama Kepala Keluarga','No. Bangunan','No. Keluarga'];
+  const rows = sorted.map((h,i)=>[i+1, h.kepala||'', h.nomorBangunan||'', h.nomorKeluarga||'']);
+  const csv = [headers, ...rows].map(r=>r.map(cell=>{
+    const s = String(cell??'');
+    return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s;
+  }).join(',')).join('\n');
+  downloadFile('Prelist_Responden_SE2026_'+dateStamp()+'.csv', '\uFEFF'+csv, 'text/csv;charset=utf-8');
+}
+
+function newHousehold(){
+  currentId = null;
+  clearForm();
+  openSections = new Set([0]);
+  renderSections();
+  addAnggota();
+  showView('form');
+  window.scrollTo(0,0);
+}
+
+function openHousehold(id){
+  const h = households.find(x=>x.id===id);
+  if(!h) return;
+  currentId = id;
+  fillForm(h);
+  openSections = new Set([0]);
+  renderSections();
+  showView('form');
+  window.scrollTo(0,0);
+}
+
+function duplicateHousehold(id){
+  const h = households.find(x=>x.id===id);
+  if(!h) return;
+  currentId = null;
+  fillForm(h);
+  document.getElementById('f_kepala').value = '';
+  currentFotos = {};
+  ['depan','ruangtamu','kk','meteran'].forEach(renderFotoSlot);
+  openSections = new Set([0]);
+  renderSections();
+  showView('form');
+  window.scrollTo(0,0);
+}
+
+function backToList(){
+  showView('list');
+  renderList();
+}
+
+/* ---------- Accordion ---------- */
+function toggleSection(idx){
+  const el = document.querySelector(`.section[data-sec="${idx}"]`);
+  if(openSections.has(idx)){ openSections.delete(idx); }
+  else{ openSections.add(idx); }
+  renderSections();
+}
+function renderSections(){
+  document.querySelectorAll('.section').forEach(el=>{
+    const idx = Number(el.dataset.sec);
+    el.classList.toggle('open', openSections.has(idx));
+  });
+  const rail = document.getElementById('progressRail');
+  rail.innerHTML = '';
+  for(let i=0;i<8;i++){
+    const seg = document.createElement('div');
+    seg.className = 'seg' + (i<=Math.max(...openSections) ? ' done':'');
+    rail.appendChild(seg);
+  }
+}
+
+/* ---------- Dynamic: Anggota Keluarga ---------- */
+let anggotaCounter = 0;
+function addAnggota(data){
+  anggotaCounter++;
+  const wrap = document.getElementById('anggotaList');
+  const div = document.createElement('div');
+  div.className = 'member-card';
+  div.dataset.aid = anggotaCounter;
+  div.innerHTML = `
+    <button class="remove-x" onclick="this.parentElement.remove()">✕</button>
+    <div class="idx">Anggota ${wrap.children.length+1}</div>
+    <label>Nama</label>
+    <input type="text" class="ag-nama" placeholder="Nama anggota keluarga" value="${data&&data.nama?escapeAttr(data.nama):''}">
+    <div class="row2">
+      <div>
+        <label>Pekerjaan</label>
+        <input type="text" class="ag-pekerjaan" placeholder="cth. Petani" value="${data&&data.pekerjaan?escapeAttr(data.pekerjaan):''}">
+      </div>
+      <div>
+        <label>Pendapatan/bln (Rp)</label>
+        <input type="text" class="ag-pendapatan rp-input" placeholder="0" inputmode="numeric" value="${data&&data.pendapatan?Number(data.pendapatan).toLocaleString('id-ID'):''}">
+      </div>
+    </div>
+    <label>Penyakit / Riwayat Kesehatan (opsional)</label>
+    <input type="text" class="ag-penyakit" placeholder="cth. Hipertensi, tidak ada, dll" value="${data&&data.penyakit?escapeAttr(data.penyakit):''}">
+  `;
+  wrap.appendChild(div);
+}
+function escapeAttr(s){ return String(s).replace(/"/g,'&quot;'); }
+
+/* ---------- Dynamic: Kendaraan ---------- */
+function addKendaraan(data){
+  const wrap = document.getElementById('kendaraanList');
+  const div = document.createElement('div');
+  div.className = 'kendaraan-card';
+  div.innerHTML = `
+    <button class="remove-x" onclick="this.parentElement.remove(); updateSummary();">✕</button>
+    <div class="row2">
+      <div>
+        <label>Jenis Kendaraan</label>
+        <input type="text" class="kd-jenis" placeholder="cth. Sepeda Motor" value="${data&&data.jenis?escapeAttr(data.jenis):''}">
+      </div>
+      <div>
+        <label>Jumlah</label>
+        <input type="number" class="kd-jumlah" placeholder="0" inputmode="numeric" value="${data&&data.jumlah?data.jumlah:''}">
+      </div>
+    </div>
+    <label>Harga / Nilai (Rp)</label>
+    <input type="text" class="kd-harga rp-input" placeholder="0" inputmode="numeric" value="${data&&data.harga?Number(data.harga).toLocaleString('id-ID'):''}">
+  `;
+  wrap.appendChild(div);
+}
+
+/* ---------- Dynamic: Aset ---------- */
+function addAset(data){
+  const wrap = document.getElementById('asetList');
+  const div = document.createElement('div');
+  div.className = 'kendaraan-card';
+  div.innerHTML = `
+    <button class="remove-x" onclick="this.parentElement.remove(); updateSummary();">✕</button>
+    <label>Nama Aset</label>
+    <input type="text" class="as-nama" placeholder="cth. Perhiasan Emas, Sawah, Ternak" value="${data&&data.nama?escapeAttr(data.nama):''}">
+    <label>Harga / Nilai (Rp)</label>
+    <input type="text" class="as-harga rp-input" placeholder="0" inputmode="numeric" value="${data&&data.harga?Number(data.harga).toLocaleString('id-ID'):''}">
+  `;
+  wrap.appendChild(div);
+}
+
+/* ---------- Foto Dokumentasi ---------- */
+let currentFotos = {}; // {depan: dataURL, ruangtamu: dataURL, kk: dataURL}
+const FOTO_LABELS = { depan: 'Rumah Tampak Depan', ruangtamu: 'Ruang Tamu', kk: 'Foto KK', meteran: 'Foto Meteran' };
+
+['depan','ruangtamu','kk','meteran'].forEach(key=>{
+  const input = document.getElementById('input_'+key);
+  if(!input) return;
+  input.addEventListener('change', function(e){
+    const file = e.target.files[0];
+    if(!file) return;
+    compressImage(file, 900, 0.6).then(dataUrl=>{
+      currentFotos[key] = dataUrl;
+      renderFotoSlot(key);
+    }).catch(()=>{
+      alert('Gagal memproses foto. Coba lagi.');
+    });
+    e.target.value = '';
+  });
+});
+
+function triggerFoto(key){
+  document.getElementById('input_'+key).click();
+}
+function removeFoto(key){
+  delete currentFotos[key];
+  renderFotoSlot(key);
+}
+function renderFotoSlot(key){
+  const slot = document.getElementById('slot_'+key);
+  const img = slot.querySelector('.foto-preview');
+  const placeholder = slot.querySelector('.foto-placeholder');
+  const actions = slot.querySelector('.foto-actions');
+  if(currentFotos[key]){
+    img.src = currentFotos[key];
+    img.style.display = 'block';
+    placeholder.style.display = 'none';
+    actions.style.display = 'flex';
+  }else{
+    img.style.display = 'none';
+    placeholder.style.display = 'block';
+    actions.style.display = 'none';
+  }
+}
+function compressImage(file, maxWidth, quality){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = function(ev){
+      const img = new Image();
+      img.onload = function(){
+        let w = img.width, h = img.height;
+        if(w > maxWidth){
+          h = Math.round(h * (maxWidth / w));
+          w = maxWidth;
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = reject;
+      img.src = ev.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+function downloadOneFoto(dataUrl, filename){
+  const a = document.createElement('a');
+  a.href = dataUrl; a.download = filename;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+}
+function downloadFotos(id){
+  const h = households.find(x=>x.id===id);
+  if(!h || !h.fotos) return;
+  const keys = Object.keys(h.fotos);
+  if(keys.length === 0){ alert('Belum ada foto untuk keluarga ini.'); return; }
+  const safeName = (h.kepala||'responden').replace(/[^a-z0-9]+/gi,'_');
+  keys.forEach((key,i)=>{
+    setTimeout(()=>{
+      const label = (FOTO_LABELS[key]||key).replace(/[^a-z0-9]+/gi,'_');
+      downloadOneFoto(h.fotos[key], `SE2026_${h.nomorBangunan||'0'}_${h.nomorKeluarga||'0'}_${safeName}_${label}.jpg`);
+    }, i*400);
+  });
+}
+
+/* ---------- Dynamic: Aset Usaha ---------- */
+function addAsetUsaha(data){
+  const wrap = document.getElementById('asetUsahaList');
+  const div = document.createElement('div');
+  div.className = 'kendaraan-card';
+  div.innerHTML = `
+    <button class="remove-x" onclick="this.parentElement.remove(); updateSummary();">✕</button>
+    <label>Nama Aset Usaha</label>
+    <input type="text" class="au-nama" placeholder="cth. Mesin Jahit, Etalase, Gerobak" value="${data&&data.nama?escapeAttr(data.nama):''}">
+    <label>Harga / Nilai (Rp)</label>
+    <input type="text" class="au-harga rp-input" placeholder="0" inputmode="numeric" value="${data&&data.harga?Number(data.harga).toLocaleString('id-ID'):''}">
+  `;
+  wrap.appendChild(div);
+}
+
+/* ---------- Dynamic: Rincian Modal Usaha ---------- */
+function addModalUsaha(data){
+  const wrap = document.getElementById('modalUsahaList');
+  const div = document.createElement('div');
+  div.className = 'kendaraan-card';
+  div.innerHTML = `
+    <button class="remove-x" onclick="this.parentElement.remove(); updateSummary();">✕</button>
+    <label>Rincian Modal (nama barang/keperluan)</label>
+    <input type="text" class="mu-nama" placeholder="cth. Sewa Tempat, Bahan Baku, Stok Barang" value="${data&&data.nama?escapeAttr(data.nama):''}">
+    <label>Harga (Rp)</label>
+    <input type="text" class="mu-harga rp-input" placeholder="0" inputmode="numeric" value="${data&&data.harga?Number(data.harga).toLocaleString('id-ID'):''}">
+  `;
+  wrap.appendChild(div);
+}
+
+/* ---------- Form <-> Data ---------- */
+function clearForm(){
+  ['f_nomorBangunan','f_nomorKeluarga','f_kepala','f_dusun','f_idListrik','f_bayarListrik','f_makananMinggu','f_nonMakananBulan',
+   'f_nonMakananTahun','f_luasRumah','f_namaUsaha','f_gajiKaryawan','f_labaUsaha','f_catatanKesehatan','f_nomorWa']
+   .forEach(id=>document.getElementById(id).value='');
+  document.getElementById('anggotaList').innerHTML='';
+  document.getElementById('kendaraanList').innerHTML='';
+  document.getElementById('asetList').innerHTML='';
+  document.getElementById('asetUsahaList').innerHTML='';
+  document.getElementById('modalUsahaList').innerHTML='';
+  currentFotos = {};
+  ['depan','ruangtamu','kk','meteran'].forEach(renderFotoSlot);
+  updateSummary();
+}
+
+function fillForm(h){
+  clearForm();
+  document.getElementById('f_nomorBangunan').value = h.nomorBangunan||'';
+  document.getElementById('f_nomorKeluarga').value = h.nomorKeluarga||'';
+  document.getElementById('f_kepala').value = h.kepala||'';
+  document.getElementById('f_nomorWa').value = h.nomorWa||'';
+  document.getElementById('f_dusun').value = h.dusun||'';
+  document.getElementById('f_idListrik').value = h.idListrik||'';
+  document.getElementById('f_bayarListrik').value = h.bayarListrik ? Number(h.bayarListrik).toLocaleString('id-ID') : '';
+  document.getElementById('f_makananMinggu').value = h.makananMinggu ? Number(h.makananMinggu).toLocaleString('id-ID') : '';
+  document.getElementById('f_nonMakananBulan').value = h.nonMakananBulan ? Number(h.nonMakananBulan).toLocaleString('id-ID') : '';
+  document.getElementById('f_nonMakananTahun').value = h.nonMakananTahun ? Number(h.nonMakananTahun).toLocaleString('id-ID') : '';
+  document.getElementById('f_luasRumah').value = h.luasRumah||'';
+  document.getElementById('f_namaUsaha').value = h.namaUsaha||'';
+  document.getElementById('f_gajiKaryawan').value = h.gajiKaryawan ? Number(h.gajiKaryawan).toLocaleString('id-ID') : '';
+  document.getElementById('f_labaUsaha').value = h.labaUsaha ? Number(h.labaUsaha).toLocaleString('id-ID') : '';
+  document.getElementById('f_catatanKesehatan').value = h.catatanKesehatan||'';
+  (h.anggota||[]).forEach(a=>addAnggota(a));
+  (h.kendaraan||[]).forEach(k=>addKendaraan(k));
+  (h.asetItems||[]).forEach(a=>addAset(a));
+  (h.modalUsahaItems||[]).forEach(m=>addModalUsaha(m));
+  (h.asetUsaha||[]).forEach(a=>addAsetUsaha(a));
+  currentFotos = Object.assign({}, h.fotos||{});
+  ['depan','ruangtamu','kk','meteran'].forEach(renderFotoSlot);
+  updateSummary();
+}
+
+function collectAnggota(){
+  return [...document.querySelectorAll('#anggotaList .member-card')].map(el=>({
+    nama: el.querySelector('.ag-nama').value.trim(),
+    pekerjaan: el.querySelector('.ag-pekerjaan').value.trim(),
+    pendapatan: parseRupiah(el.querySelector('.ag-pendapatan').value),
+    penyakit: el.querySelector('.ag-penyakit').value.trim(),
+  }));
+}
+function collectKendaraan(){
+  return [...document.querySelectorAll('#kendaraanList .kendaraan-card')].map(el=>({
+    jenis: el.querySelector('.kd-jenis').value.trim(),
+    jumlah: Number(el.querySelector('.kd-jumlah').value)||0,
+    harga: parseRupiah(el.querySelector('.kd-harga').value),
+  }));
+}
+function collectAset(){
+  return [...document.querySelectorAll('#asetList .kendaraan-card')].map(el=>({
+    nama: el.querySelector('.as-nama').value.trim(),
+    harga: parseRupiah(el.querySelector('.as-harga').value),
+  }));
+}
+function collectAsetUsaha(){
+  return [...document.querySelectorAll('#asetUsahaList .kendaraan-card')].map(el=>({
+    nama: el.querySelector('.au-nama').value.trim(),
+    harga: parseRupiah(el.querySelector('.au-harga').value),
+  }));
+}
+function collectModalUsaha(){
+  return [...document.querySelectorAll('#modalUsahaList .kendaraan-card')].map(el=>({
+    nama: el.querySelector('.mu-nama').value.trim(),
+    harga: parseRupiah(el.querySelector('.mu-harga').value),
+  }));
+}
+
+function updateSummary(){
+  const totalPendapatan = collectAnggota().reduce((s,a)=>s+a.pendapatan,0);
+  const bulanNonMakanan = parseRupiah(document.getElementById('f_nonMakananBulan').value);
+  const tahunNonMakananPerBulan = parseRupiah(document.getElementById('f_nonMakananTahun').value)/12;
+  const makananPerBulan = parseRupiah(document.getElementById('f_makananMinggu').value)*4.33;
+  const listrik = parseRupiah(document.getElementById('f_bayarListrik').value);
+  const totalPengeluaran = bulanNonMakanan + tahunNonMakananPerBulan + makananPerBulan + listrik;
+  document.getElementById('sumPendapatan').textContent = fmtRp(Math.round(totalPendapatan));
+  document.getElementById('sumPengeluaran').textContent = fmtRp(Math.round(totalPengeluaran));
+
+  const totalAset = collectAset().reduce((s,a)=>s+a.harga,0);
+  const totalKendaraan = collectKendaraan().reduce((s,k)=>s+k.harga,0);
+  const totalAsetUsaha = collectAsetUsaha().reduce((s,a)=>s+a.harga,0);
+  const totalModalUsaha = collectModalUsaha().reduce((s,m)=>s+m.harga,0);
+  const asetHint = document.getElementById('totalAsetHint');
+  const kendaraanHint = document.getElementById('totalKendaraanHint');
+  const asetUsahaHint = document.getElementById('totalAsetUsahaHint');
+  const modalUsahaHint = document.getElementById('totalModalUsahaHint');
+  if(asetHint) asetHint.textContent = 'Total nilai aset: ' + fmtRp(totalAset);
+  if(kendaraanHint) kendaraanHint.textContent = 'Total nilai kendaraan: ' + fmtRp(totalKendaraan);
+  if(asetUsahaHint) asetUsahaHint.textContent = 'Total nilai aset usaha: ' + fmtRp(totalAsetUsaha);
+  if(modalUsahaHint) modalUsahaHint.textContent = 'Total modal usaha: ' + fmtRp(totalModalUsaha);
+}
+document.getElementById('formView').addEventListener('input', updateSummary);
+
+function saveHousehold(){
+  const kepala = document.getElementById('f_kepala').value.trim();
+  const dusun = document.getElementById('f_dusun').value.trim();
+  if(!kepala){
+    alert('Nama kepala keluarga wajib diisi.');
+    document.getElementById('f_kepala').focus();
+    openSections.add(0); renderSections();
+    return;
+  }
+  const data = {
+    id: currentId || ('h_'+Date.now()+'_'+Math.random().toString(36).slice(2,7)),
+    nomorBangunan: document.getElementById('f_nomorBangunan').value.trim(),
+    nomorKeluarga: document.getElementById('f_nomorKeluarga').value.trim(),
+    kepala, dusun,
+    nomorWa: document.getElementById('f_nomorWa').value.trim(),
+    anggota: collectAnggota(),
+    idListrik: document.getElementById('f_idListrik').value.trim(),
+    bayarListrik: parseRupiah(document.getElementById('f_bayarListrik').value),
+    makananMinggu: parseRupiah(document.getElementById('f_makananMinggu').value),
+    nonMakananBulan: parseRupiah(document.getElementById('f_nonMakananBulan').value),
+    nonMakananTahun: parseRupiah(document.getElementById('f_nonMakananTahun').value),
+    asetItems: collectAset(),
+    aset: collectAset().reduce((s,a)=>s+a.harga,0),
+    luasRumah: Number(document.getElementById('f_luasRumah').value)||0,
+    kendaraan: collectKendaraan(),
+    namaUsaha: document.getElementById('f_namaUsaha').value.trim(),
+    modalUsahaItems: collectModalUsaha(),
+    modalUsaha: collectModalUsaha().reduce((s,m)=>s+m.harga,0),
+    gajiKaryawan: parseRupiah(document.getElementById('f_gajiKaryawan').value),
+    labaUsaha: parseRupiah(document.getElementById('f_labaUsaha').value),
+    asetUsaha: collectAsetUsaha(),
+    fotos: Object.assign({}, currentFotos),
+    catatanKesehatan: document.getElementById('f_catatanKesehatan').value.trim(),
+    updatedAt: Date.now(),
+    createdAt: currentId ? (households.find(h=>h.id===currentId)||{}).createdAt || Date.now() : Date.now(),
+  };
+  const idx = households.findIndex(h=>h.id===data.id);
+  if(idx>=0) households[idx] = data; else households.push(data);
+  persist();
+  refreshDusunList();
+  backToList();
+  syncToServer();
+}
+
+function refreshDusunList(){
+  const dl = document.getElementById('dusunList');
+  const dusuns = [...new Set(households.map(h=>h.dusun).filter(Boolean))];
+  dl.innerHTML = dusuns.map(d=>`<option value="${escapeAttr(d)}">`).join('');
+}
+
+/* ---------- Import ---------- */
+let importedData = null;
+document.getElementById('importBtn').addEventListener('click', ()=>{
+  document.getElementById('importFile').click();
+});
+document.getElementById('importFile').addEventListener('change', function(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev){
+    try{
+      const data = JSON.parse(ev.target.result);
+      if(!Array.isArray(data)) throw new Error('format tidak sesuai');
+      importedData = data;
+      document.getElementById('importCount').textContent = data.length;
+      document.getElementById('importModal').classList.add('show');
+    }catch(err){
+      alert('File tidak valid. Pastikan ini file backup JSON dari aplikasi ini.');
+    }
+    e.target.value = '';
+  };
+  reader.readAsText(file);
+});
+function closeImportModal(){
+  importedData = null;
+  document.getElementById('importModal').classList.remove('show');
+}
+function doImport(mode){
+  if(!importedData) return;
+  if(mode === 'replace'){
+    households = importedData;
+  }else{
+    const existingIds = new Set(households.map(h=>h.id));
+    importedData.forEach(h=>{
+      if(existingIds.has(h.id)){
+        const idx = households.findIndex(x=>x.id===h.id);
+        households[idx] = h;
+      }else{
+        households.push(h);
+      }
+    });
+  }
+  persist();
+  refreshDusunList();
+  closeImportModal();
+  renderList();
+  syncToServer();
+  alert('Berhasil dimuat dan disimpan ke penyimpanan HP.');
+}
+
+/* ---------- Delete ---------- */
+function askDelete(id){
+  deleteTargetId = id;
+  document.getElementById('deleteModal').classList.add('show');
+}
+function closeDeleteModal(){
+  deleteTargetId = null;
+  document.getElementById('deleteModal').classList.remove('show');
+}
+function confirmDelete(){
+  households = households.filter(h=>h.id!==deleteTargetId);
+  persist();
+  closeDeleteModal();
+  renderList();
+  syncToServer();
+}
+
+function exportOne(id){
+  const h = households.find(x=>x.id===id);
+  if(!h) return;
+  const kendaraanStr = (h.kendaraan||[]).length
+    ? h.kendaraan.map(k=>`  - ${k.jenis||'-'}: ${k.jumlah||0} unit, senilai ${fmtRp(k.harga)}`).join('\n')
+    : '  - Tidak ada';
+  const asetStr = (h.asetItems||[]).length
+    ? h.asetItems.map(a=>`  - ${a.nama||'-'}: ${fmtRp(a.harga)}`).join('\n')
+    : '  - Tidak ada';
+  const totalKendaraan = (h.kendaraan||[]).reduce((s,k)=>s+(Number(k.harga)||0),0);
+  const anggotaStr = (h.anggota||[]).length
+    ? h.anggota.map((a,i)=>`  ${i+1}. ${a.nama||'-'} | Pekerjaan: ${a.pekerjaan||'-'} | Pendapatan: ${fmtRp(a.pendapatan)} | Penyakit: ${a.penyakit||'-'}`).join('\n')
+    : '  - Belum ada data anggota';
+  const totalPendapatan = (h.anggota||[]).reduce((s,a)=>s+(Number(a.pendapatan)||0),0);
+
+  const txt =
+`SENSUS EKONOMI 2026 — FORMULIR RESPONDEN
+==========================================
+Nomor Bangunan   : ${h.nomorBangunan||'-'}
+Nomor Keluarga   : ${h.nomorKeluarga||'-'}
+Dusun            : ${h.dusun||'-'}
+Kepala Keluarga  : ${h.kepala||'-'}
+Nomor WA         : ${h.nomorWa||'-'}
+Didata pada      : ${fmtDate(h.createdAt)}
+Terakhir diubah  : ${fmtDate(h.updatedAt)}
+
+1-2. ANGGOTA KELUARGA (Pekerjaan & Pendapatan)
+------------------------------------------
+${anggotaStr}
+Total Pendapatan Keluarga/bln: ${fmtRp(totalPendapatan)}
+
+3. LISTRIK
+------------------------------------------
+  ID Pelanggan     : ${h.idListrik||'-'}
+  Bayar/bulan      : ${fmtRp(h.bayarListrik)}
+
+4-6. PENGELUARAN RUMAH TANGGA
+------------------------------------------
+  Makanan/minggu       : ${fmtRp(h.makananMinggu)}
+  Non-Makanan/bulan    : ${fmtRp(h.nonMakananBulan)}
+  Non-Makanan/tahun    : ${fmtRp(h.nonMakananTahun)}
+
+7-9. ASET, KENDARAAN & RUMAH
+------------------------------------------
+  Aset selain rumah:
+${asetStr}
+  Total nilai aset      : ${fmtRp(h.aset)}
+  Luas Rumah             : ${h.luasRumah||0} m²
+  Kendaraan:
+${kendaraanStr}
+  Total nilai kendaraan  : ${fmtRp(totalKendaraan)}
+
+10. USAHA
+------------------------------------------
+  Nama/Jenis Usaha : ${h.namaUsaha||'Tidak ada usaha'}
+  Rincian Modal Usaha:
+${(h.modalUsahaItems||[]).length ? h.modalUsahaItems.map(m=>`    - ${m.nama||'-'}: ${fmtRp(m.harga)}`).join('\n') : '    - Tidak ada'}
+  Total Modal Usaha : ${fmtRp(h.modalUsaha)}
+  Gaji Karyawan/bulan : ${fmtRp(h.gajiKaryawan)}
+  Laba/bulan       : ${fmtRp(h.labaUsaha)}
+  Aset Usaha:
+${(h.asetUsaha||[]).length ? h.asetUsaha.map(a=>`    - ${a.nama||'-'}: ${fmtRp(a.harga)}`).join('\n') : '    - Tidak ada'}
+  Total nilai aset usaha : ${fmtRp((h.asetUsaha||[]).reduce((s,a)=>s+(Number(a.harga)||0),0))}
+
+11. KESEHATAN
+------------------------------------------
+  Catatan tambahan : ${h.catatanKesehatan||'-'}
+  (Riwayat penyakit per-anggota tercantum di bagian 1-2)
+
+FOTO DOKUMENTASI
+------------------------------------------
+  Rumah Tampak Depan : ${h.fotos && h.fotos.depan ? 'Ada' : 'Belum ada'}
+  Ruang Tamu          : ${h.fotos && h.fotos.ruangtamu ? 'Ada' : 'Belum ada'}
+  Foto KK             : ${h.fotos && h.fotos.kk ? 'Ada' : 'Belum ada'}
+  Foto Meteran        : ${h.fotos && h.fotos.meteran ? 'Ada' : 'Belum ada'}
+  (Unduh file foto terpisah lewat tombol "📷 Foto" di daftar responden)
+
+==========================================
+Dicetak dari Buku Responden — Sensus Ekonomi 2026
+`;
+  const safeName = (h.kepala||'responden').replace(/[^a-z0-9]+/gi,'_');
+  downloadFile(`SE2026_${h.nomorBangunan||'0'}_${h.nomorKeluarga||'0'}_${safeName}.txt`, txt, 'text/plain;charset=utf-8');
+}
+
+/* ---------- Export ---------- */
+function exportData(){
+  const format = confirm('OK = Export CSV (Excel)\nBatal = Export JSON (backup lengkap)');
+  if(format) exportCSV(); else exportJSON();
+}
+function exportCSV(){
+  const headers = [
+    'Nomor Bangunan','Nomor Keluarga','Dusun','Kepala Keluarga','Nomor WA','Nama Anggota','Pekerjaan','Pendapatan/bln','Penyakit',
+    'ID Listrik','Bayar Listrik/bln','Pengeluaran Makanan/minggu','Pengeluaran Non-Makanan/bln',
+    'Pengeluaran Non-Makanan/thn','Rincian Aset','Total Nilai Aset','Kendaraan','Luas Rumah (m2)','Nama Usaha',
+    'Rincian Modal Usaha','Total Modal Usaha','Gaji Karyawan/bln','Laba Usaha/bln','Rincian Aset Usaha','Total Nilai Aset Usaha'
+  ];
+  const rows = [];
+  households.slice().sort(sortByBangunanKeluarga).forEach(h=>{
+    const kendaraanStr = (h.kendaraan||[]).map(k=>`${k.jenis} (${k.jumlah} unit, ${fmtRp(k.harga)})`).join('; ');
+    const asetStr = (h.asetItems||[]).map(a=>`${a.nama} (${fmtRp(a.harga)})`).join('; ');
+    const asetUsahaStr = (h.asetUsaha||[]).map(a=>`${a.nama} (${fmtRp(a.harga)})`).join('; ');
+    const totalAsetUsaha = (h.asetUsaha||[]).reduce((s,a)=>s+(Number(a.harga)||0),0);
+    const modalUsahaStr = (h.modalUsahaItems||[]).map(m=>`${m.nama} (${fmtRp(m.harga)})`).join('; ');
+    const anggota = h.anggota && h.anggota.length ? h.anggota : [{nama:'',pekerjaan:'',pendapatan:'',penyakit:''}];
+    anggota.forEach((a,i)=>{
+      rows.push([
+        i===0?h.nomorBangunan:'', i===0?h.nomorKeluarga:'',
+        i===0?h.dusun:'', i===0?h.kepala:'', i===0?h.nomorWa:'',
+        a.nama, a.pekerjaan, a.pendapatan, a.penyakit,
+        i===0?h.idListrik:'', i===0?h.bayarListrik:'',
+        i===0?h.makananMinggu:'', i===0?h.nonMakananBulan:'', i===0?h.nonMakananTahun:'',
+        i===0?asetStr:'', i===0?h.aset:'', i===0?kendaraanStr:'', i===0?h.luasRumah:'',
+        i===0?h.namaUsaha:'',
+        i===0?modalUsahaStr:'', i===0?h.modalUsaha:'', i===0?h.gajiKaryawan:'', i===0?h.labaUsaha:'',
+        i===0?asetUsahaStr:'', i===0?totalAsetUsaha:''
+      ]);
+    });
+  });
+  const csv = [headers, ...rows].map(r=>r.map(cell=>{
+    const s = String(cell??'');
+    return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s;
+  }).join(',')).join('\n');
+  downloadFile('sensus_ekonomi_2026_'+dateStamp()+'.csv', '\uFEFF'+csv, 'text/csv;charset=utf-8');
+}
+function exportJSON(){
+  downloadFile('sensus_ekonomi_2026_backup_'+dateStamp()+'.json', JSON.stringify(households,null,2), 'application/json');
+}
+function dateStamp(){
+  const d = new Date();
+  return d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0')+'_'+String(d.getHours()).padStart(2,'0')+String(d.getMinutes()).padStart(2,'0');
+}
+function downloadFile(filename, content, mime){
+  const blob = new Blob([content], {type:mime});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+document.getElementById('exportBtn').addEventListener('click', exportData);
+
+/* ---------- Akun (Login/Logout/Sync via Google Sheet + Drive) ---------- */
+// GANTI dengan URL Web App Apps Script kamu setelah di-deploy (lihat panduan yang menyertai file ini)
+const LICENSE_API_URL = 'https://script.google.com/macros/s/AKfycbycL01gmQ1Rq92vea78u9r4Xy8l_i5wxhiIlXaJGMiPrsI9JqK-0VuIJSxnNW3ntCQ2/exec';
+const LICENSE_KEY = 'sensus2026_license_v1';
+
+function getLicense(){
+  try{
+    return JSON.parse(localStorage.getItem(LICENSE_KEY)) || null;
+  }catch(e){ return null; }
+}
+function saveLicense(lic){
+  localStorage.setItem(LICENSE_KEY, JSON.stringify(lic));
+}
+function makeDeviceId(){
+  if(window.crypto && crypto.randomUUID) return crypto.randomUUID().toUpperCase();
+  return 'DEV-'+Date.now().toString(36).toUpperCase()+'-'+Math.random().toString(36).slice(2,8).toUpperCase();
+}
+function getOrCreateDeviceId(){
+  let lic = getLicense();
+  if(!lic){
+    lic = { deviceId: makeDeviceId(), loggedIn: false };
+    saveLicense(lic);
+  }
+  return lic;
+}
+function copyDeviceId(){
+  const id = document.getElementById('deviceIdDisplay').textContent;
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(id).then(()=>{
+      setLockStatus('Device ID disalin. Kirim ke penjual untuk mendapat kode aktivasi.', 'ok');
+    });
+  }
+}
+function setLockStatus(msg, type){
+  const el = document.getElementById('lockStatus');
+  el.textContent = msg;
+  el.className = 'lock-status' + (type ? ' '+type : '');
+}
+function checkLicense(){
+  const lic = getOrCreateDeviceId();
+  document.getElementById('deviceIdDisplay').textContent = lic.deviceId;
+  if(lic.loggedIn){
+    document.getElementById('lockOverlay').style.display = 'none';
+  }else{
+    document.getElementById('lockOverlay').style.display = 'flex';
+  }
+}
+function apiConfigured(){
+  return LICENSE_API_URL.indexOf('GANTI_DENGAN') !== 0;
+}
+// Data yang dikirim ke server TIDAK menyertakan foto (base64 foto terlalu besar untuk disinkron).
+// Foto tetap tersimpan lokal di tiap perangkat dan harus diunduh/dipindah manual bila ganti perangkat.
+function householdsForSync(){
+  return households.map(h=>{
+    const copy = Object.assign({}, h);
+    delete copy.fotos;
+    return copy;
+  });
+}
+
+async function loginApp(){
+  const lic = getOrCreateDeviceId();
+  const kode = document.getElementById('licenseCode').value.trim().toUpperCase();
+  const nama = document.getElementById('licenseName').value.trim();
+  if(!kode){
+    setLockStatus('Masukkan kode aktivasi terlebih dahulu.', 'err');
+    return;
+  }
+  if(!apiConfigured()){
+    setLockStatus('URL server akun belum diatur oleh penjual aplikasi.', 'err');
+    return;
+  }
+  const btn = document.getElementById('activateBtn');
+  btn.disabled = true;
+  setLockStatus('Menghubungi server...', '');
+  try{
+    const url = `${LICENSE_API_URL}?action=login&kode=${encodeURIComponent(kode)}&deviceId=${encodeURIComponent(lic.deviceId)}&nama=${encodeURIComponent(nama)}`;
+    const res = await fetch(url);
+    const resData = await res.json();
+    if(resData.status === 'ok'){
+      lic.loggedIn = true;
+      lic.kode = kode;
+      lic.nama = nama;
+      saveLicense(lic);
+
+      let serverHouseholds = [];
+      try{ serverHouseholds = JSON.parse(resData.data || '[]'); }catch(e){ serverHouseholds = []; }
+
+      if(Array.isArray(serverHouseholds) && serverHouseholds.length){
+        if(households.length === 0){
+          households = serverHouseholds;
+          persist();
+          refreshDusunList();
+        }else{
+          importedData = serverHouseholds;
+          document.getElementById('importCount').textContent = serverHouseholds.length;
+          document.getElementById('importModal').classList.add('show');
+        }
+      }
+      setLockStatus('Login berhasil!', 'ok');
+      setTimeout(()=>{
+        document.getElementById('lockOverlay').style.display = 'none';
+        renderList();
+      }, 400);
+    }else{
+      setLockStatus(resData.message || 'Kode aktivasi tidak valid.', 'err');
+    }
+  }catch(e){
+    setLockStatus('Gagal terhubung ke server. Pastikan ada koneksi internet, lalu coba lagi.', 'err');
+  }
+  btn.disabled = false;
+}
+
+async function syncToServer(silent){
+  const lic = getLicense();
+  if(!lic || !lic.loggedIn || !apiConfigured()) return false;
+  try{
+    const res = await fetch(LICENSE_API_URL, {
+      method: 'POST',
+      headers: {'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({
+        action: 'sync',
+        kode: lic.kode,
+        deviceId: lic.deviceId,
+        data: JSON.stringify(householdsForSync())
+      })
+    });
+    const resData = await res.json();
+    return resData.status === 'ok';
+  }catch(e){
+    return false;
+  }
+}
+async function manualSync(){
+  const lic = getLicense();
+  if(!lic || !lic.loggedIn){
+    alert('Anda belum login.');
+    return;
+  }
+  const ok = await syncToServer();
+  alert(ok ? 'Data berhasil disinkronkan ke server.' : 'Sinkron gagal. Periksa koneksi internet.');
+}
+
+function openLogoutModal(){
+  const lic = getLicense();
+  if(!lic || !lic.loggedIn){
+    alert('Anda belum login.');
+    return;
+  }
+  document.getElementById('logoutModal').classList.add('show');
+}
+function closeLogoutModal(){
+  document.getElementById('logoutModal').classList.remove('show');
+}
+async function confirmLogout(){
+  const lic = getLicense();
+  closeLogoutModal();
+  const btn = document.getElementById('fab');
+  try{
+    const res = await fetch(LICENSE_API_URL, {
+      method: 'POST',
+      headers: {'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({
+        action: 'logout',
+        kode: lic.kode,
+        deviceId: lic.deviceId,
+        data: JSON.stringify(householdsForSync())
+      })
+    });
+    const resData = await res.json();
+    if(resData.status === 'ok'){
+      lic.loggedIn = false;
+      saveLicense(lic);
+      document.getElementById('licenseCode').value = '';
+      document.getElementById('licenseName').value = '';
+      setLockStatus('', '');
+      document.getElementById('lockOverlay').style.display = 'flex';
+      alert('Berhasil keluar. Kode ini sekarang bisa dipakai login di perangkat lain.');
+    }else{
+      alert(resData.message || 'Gagal logout. Coba lagi.');
+    }
+  }catch(e){
+    alert('Gagal terhubung ke server. Pastikan ada koneksi internet, lalu coba lagi.');
+  }
+}
+
+/* ---------- Init ---------- */
+// Ditunda sampai seluruh HTML (termasuk layar kunci di bawah) selesai dimuat,
+// supaya checkLicense() tidak gagal mencari elemen yang belum ada di DOM.
+document.addEventListener('DOMContentLoaded', function(){
+  checkLicense();
+  loadData();
+  refreshDusunList();
+  renderList();
+});
+
+// Daftarkan service worker (mode PWA) — biar aplikasi tetap bisa dibuka offline
+// setelah dipasang ke layar utama. Aman diabaikan kalau dibuka sebagai file lokal biasa.
+if('serviceWorker' in navigator){
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('service-worker.js').catch(function(err){
+      console.log('Service worker gagal didaftarkan (normal kalau dibuka sebagai file lokal):', err);
+    });
+  });
+}
+</script>
+<!-- License lock overlay -->
+<div class="lock-overlay" id="lockOverlay" style="display:none">
+  <div class="lock-card">
+    <div class="eyebrow">Sensus Ekonomi 2026 · Akun</div>
+    <h2>Masuk ke Akun</h2>
+    <div class="desc">Kode aktivasi hanya bisa login di 1 perangkat pada satu waktu. Login butuh internet sekali; setelah itu bisa dipakai offline. Data yang pernah disinkron di perangkat lain akan otomatis dimuat.</div>
+
+    <div class="deviceid-box">
+      <div class="lbl">Device ID Anda</div>
+      <div class="idval" id="deviceIdDisplay">-</div>
+      <button class="copybtn" onclick="copyDeviceId()">⧉ Salin Device ID</button>
+    </div>
+
+    <label>Nama Pengguna</label>
+    <input type="text" id="licenseName" placeholder="Nama Anda">
+    <label>Kode Aktivasi</label>
+    <input type="text" id="licenseCode" placeholder="cth. SE2026-XXXX-XXXX" style="text-transform:uppercase">
+
+    <button class="btn btn-primary btn-block" style="margin-top:16px" onclick="loginApp()" id="activateBtn">Masuk</button>
+    <div class="lock-status" id="lockStatus"></div>
+  </div>
+</div>
+
+<!-- Logout confirm modal -->
+<div class="modal-overlay" id="logoutModal">
+  <div class="modal-sheet">
+    <h3>Keluar dari akun?</h3>
+    <p>Data di perangkat ini akan disinkronkan ke server dulu, lalu kode aktivasi ini bisa dipakai login di perangkat lain. Data di perangkat ini tetap tersimpan di sini.</p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost btn-block" onclick="closeLogoutModal()">Batal</button>
+      <button class="btn btn-red btn-block" onclick="confirmLogout()">Ya, Keluar</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
