@@ -1788,7 +1788,19 @@ async function confirmLogout(){
       document.getElementById('lockOverlay').style.display = 'flex';
       alert('Berhasil keluar. Kode ini sekarang bisa dipakai login di perangkat lain.');
     }else{
-      alert(resData.message || 'Gagal logout. Coba lagi.');
+      const forceOut = confirm(
+        (resData.message || 'Gagal logout.') +
+        '\n\nIni biasanya karena ada sesi lain yang tercatat aktif di server untuk kode ini. Ketuk OK untuk tetap keluar dari akun DI PERANGKAT INI SEKARANG (server mungkin masih mencatat perangkat lain sebagai aktif — reset manual di Google Sheet kalau perlu), atau Batal untuk coba lagi nanti.'
+      );
+      if(forceOut){
+        closeLogoutModal();
+        lic.loggedIn = false;
+        saveLicense(lic);
+        document.getElementById('licenseCode').value = '';
+        document.getElementById('licenseName').value = '';
+        setLockStatus('', '');
+        document.getElementById('lockOverlay').style.display = 'flex';
+      }
     }
   }catch(e){
     const forceOut = confirm(
