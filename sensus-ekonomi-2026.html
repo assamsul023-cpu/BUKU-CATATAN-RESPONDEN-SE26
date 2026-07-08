@@ -1047,7 +1047,7 @@ const FOTO_KEYS = ['depan','ruangtamu','kk','meteran'];
   input.addEventListener('change', function(e){
     const file = e.target.files[0];
     if(!file) return;
-    compressImage(file, 700, 0.45).then(dataUrl=>{
+    compressImage(file, 1600, 0.85).then(dataUrl=>{
       currentFotos[key] = dataUrl;
       renderFotoSlot(key);
     }).catch(()=>{
