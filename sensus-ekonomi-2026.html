@@ -1749,9 +1749,22 @@ function closeLogoutModal(){
 }
 async function confirmLogout(){
   const lic = getLicense();
-  closeLogoutModal();
-  const btn = document.getElementById('fab');
+  const btn = document.getElementById('confirmLogoutBtn');
+  const origText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Menyinkronkan & keluar... mohon tunggu';
+
   try{
+    const controller = new AbortController();
+    const timeoutId = setTimeout(()=>controller.abort(), 30000); // batas 30 detik, jangan macet selamanya
+
+    let syncData;
+    try{
+      syncData = JSON.stringify(await householdsForSync());
+    }catch(e){
+      syncData = '[]'; // kalau gagal ambil foto, tetap lanjut logout dengan data teks kosong daripada macet
+    }
+
     const res = await fetch(LICENSE_API_URL, {
       method: 'POST',
       headers: {'Content-Type':'text/plain;charset=utf-8'},
@@ -1759,11 +1772,14 @@ async function confirmLogout(){
         action: 'logout',
         kode: lic.kode,
         deviceId: lic.deviceId,
-        data: JSON.stringify(await householdsForSync())
-      })
+        data: syncData
+      }),
+      signal: controller.signal
     });
+    clearTimeout(timeoutId);
     const resData = await res.json();
     if(resData.status === 'ok'){
+      closeLogoutModal();
       lic.loggedIn = false;
       saveLicense(lic);
       document.getElementById('licenseCode').value = '';
@@ -1775,8 +1791,24 @@ async function confirmLogout(){
       alert(resData.message || 'Gagal logout. Coba lagi.');
     }
   }catch(e){
-    alert('Gagal terhubung ke server. Pastikan ada koneksi internet, lalu coba lagi.');
+    const forceOut = confirm(
+      (e.name === 'AbortError'
+        ? 'Proses terlalu lama (mungkin foto terlalu banyak/jaringan lambat).'
+        : 'Gagal terhubung ke server.') +
+      '\n\nKetuk OK untuk tetap keluar di perangkat ini SEKARANG (data mungkin belum sempat tersinkron terakhir kali), atau Batal untuk coba lagi nanti.'
+    );
+    if(forceOut){
+      closeLogoutModal();
+      lic.loggedIn = false;
+      saveLicense(lic);
+      document.getElementById('licenseCode').value = '';
+      document.getElementById('licenseName').value = '';
+      setLockStatus('', '');
+      document.getElementById('lockOverlay').style.display = 'flex';
+    }
   }
+  btn.disabled = false;
+  btn.textContent = origText;
 }
 
 /* ---------- Migrasi foto format lama (sebelum IndexedDB) ---------- */
@@ -1846,7 +1878,7 @@ if('serviceWorker' in navigator){
     <p>Data (termasuk foto) di perangkat ini akan disinkronkan ke server dulu — kalau foto banyak, proses ini bisa makan waktu, tunggu sampai selesai. Setelah itu kode aktivasi ini bisa dipakai login di perangkat lain lengkap dengan datanya. Data di perangkat ini tetap tersimpan di sini juga.</p>
     <div class="modal-actions">
       <button class="btn btn-ghost btn-block" onclick="closeLogoutModal()">Batal</button>
-      <button class="btn btn-red btn-block" onclick="confirmLogout()">Ya, Keluar</button>
+      <button class="btn btn-red btn-block" id="confirmLogoutBtn" onclick="confirmLogout()">Ya, Keluar</button>
     </div>
   </div>
 </div>
