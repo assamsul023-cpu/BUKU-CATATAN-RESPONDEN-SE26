@@ -281,6 +281,12 @@
     overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;
   }
   @keyframes spin{to{transform:rotate(360deg);}}
+  #lightboxImg{transform-origin:center center; transition:transform .15s ease-out;}
+  .lightbox-hint{
+    position:absolute; bottom:20px; left:0; right:0; text-align:center;
+    font-size:11.5px; color:var(--paper-dim); z-index:31; pointer-events:none;
+    transition:opacity .3s;
+  }
 
   /* ---- Foto dokumentasi ---- */
   .foto-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
@@ -1051,7 +1057,7 @@ const FOTO_KEYS = ['depan','ruangtamu','kk','meteran'];
   input.addEventListener('change', function(e){
     const file = e.target.files[0];
     if(!file) return;
-    compressImage(file, 1600, 0.85).then(dataUrl=>{
+    compressImage(file, 2048, 0.92).then(dataUrl=>{
       currentFotos[key] = dataUrl;
       renderFotoSlot(key);
     }).catch(()=>{
@@ -1146,12 +1152,85 @@ function closePhotoViewer(){
 function downloadAllFromViewer(){
   if(viewerCurrentId) downloadFotos(viewerCurrentId);
 }
+/* ---------- Lightbox: pinch-zoom, double-tap zoom, pan ---------- */
+let lbScale = 1, lbX = 0, lbY = 0;
+let lbStartDist = 0, lbStartScale = 1;
+let lbLastTap = 0;
+let lbPanStart = null;
+let lbPointers = {};
+
 function openLightbox(dataUrl){
   document.getElementById('lightboxImg').src = dataUrl;
+  resetLightboxTransform();
   document.getElementById('photoLightbox').classList.add('show');
+  const hint = document.getElementById('lightboxHint');
+  hint.style.opacity = '1';
+  clearTimeout(window._lbHintTimer);
+  window._lbHintTimer = setTimeout(()=>{ hint.style.opacity = '0'; }, 2500);
 }
 function closeLightbox(){
   document.getElementById('photoLightbox').classList.remove('show');
+  resetLightboxTransform();
+}
+function resetLightboxTransform(){
+  lbScale = 1; lbX = 0; lbY = 0;
+  applyLightboxTransform();
+}
+function applyLightboxTransform(){
+  const img = document.getElementById('lightboxImg');
+  img.style.transform = `translate(${lbX}px, ${lbY}px) scale(${lbScale})`;
+}
+function lbDist(p1, p2){
+  return Math.hypot(p1.x-p2.x, p1.y-p2.y);
+}
+
+function initLightboxGestures(){
+  const viewport = document.getElementById('lightboxViewport');
+  if(!viewport) return;
+
+  viewport.addEventListener('pointerdown', function(e){
+    viewport.setPointerCapture(e.pointerId);
+    lbPointers[e.pointerId] = { x: e.clientX, y: e.clientY };
+    const pts = Object.values(lbPointers);
+    if(pts.length === 2){
+      lbStartDist = lbDist(pts[0], pts[1]);
+      lbStartScale = lbScale;
+    }else if(pts.length === 1){
+      lbPanStart = { x: e.clientX - lbX, y: e.clientY - lbY };
+      const now = Date.now();
+      if(now - lbLastTap < 300){
+        // double-tap: toggle zoom
+        if(lbScale > 1){ resetLightboxTransform(); }
+        else{ lbScale = 2.5; applyLightboxTransform(); }
+        lbLastTap = 0;
+      }else{
+        lbLastTap = now;
+      }
+    }
+  });
+  viewport.addEventListener('pointermove', function(e){
+    if(!lbPointers[e.pointerId]) return;
+    lbPointers[e.pointerId] = { x: e.clientX, y: e.clientY };
+    const pts = Object.values(lbPointers);
+    if(pts.length === 2){
+      const dist = lbDist(pts[0], pts[1]);
+      lbScale = Math.max(1, Math.min(5, lbStartScale * (dist / lbStartDist)));
+      applyLightboxTransform();
+    }else if(pts.length === 1 && lbScale > 1 && lbPanStart){
+      lbX = e.clientX - lbPanStart.x;
+      lbY = e.clientY - lbPanStart.y;
+      applyLightboxTransform();
+    }
+  });
+  function endPointer(e){
+    delete lbPointers[e.pointerId];
+    if(Object.keys(lbPointers).length === 0){
+      lbPanStart = null;
+      if(lbScale <= 1.02) resetLightboxTransform();
+    }
+  }
+  viewport.addEventListener('pointerup', endPointer);
+  viewport.addEventListener('pointercancel', endPointer);
 }
 
 async function downloadFotos(id){
@@ -1892,6 +1971,7 @@ document.addEventListener('DOMContentLoaded', function(){
   refreshDusunList();
   renderList();
   migrateOldPhotos();
+  initLightboxGestures();
 });
 
 // Daftarkan service worker (mode PWA) — biar aplikasi tetap bisa dibuka offline
@@ -1953,8 +2033,12 @@ if('serviceWorker' in navigator){
 </div>
 
 <!-- Fullscreen single photo lightbox -->
-<div class="modal-overlay" id="photoLightbox" onclick="closeLightbox()" style="align-items:center; z-index:30;">
-  <img id="lightboxImg" style="max-width:94vw; max-height:88vh; border-radius:12px; object-fit:contain;">
+<div class="modal-overlay" id="photoLightbox" style="align-items:center; justify-content:center; z-index:30; overflow:hidden;">
+  <button onclick="closeLightbox()" style="position:absolute; top:16px; right:16px; z-index:31; width:40px; height:40px; border-radius:50%; background:rgba(15,27,45,.8); border:1px solid var(--line); color:var(--paper); font-size:20px; line-height:1;">✕</button>
+  <div class="lightbox-hint" id="lightboxHint">Cubit untuk zoom · Ketuk 2x untuk zoom cepat</div>
+  <div id="lightboxViewport" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; touch-action:none;">
+    <img id="lightboxImg" style="max-width:94vw; max-height:88vh; object-fit:contain; user-select:none; -webkit-user-drag:none;">
+  </div>
 </div>
 
 <!-- Cleanup all photos confirm modal -->
