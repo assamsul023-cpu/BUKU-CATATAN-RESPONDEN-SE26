@@ -408,6 +408,19 @@
       <label>Dusun / Lingkungan</label>
       <input type="text" id="f_dusun" placeholder="cth. Dusun Kartika" list="dusunList">
       <datalist id="dusunList"></datalist>
+      <datalist id="usahaSaran">
+        <option value="Tani">
+        <option value="Perkebunan">
+        <option value="Peternakan">
+        <option value="Perikanan / Nelayan">
+        <option value="Warung Kelontong">
+        <option value="Dagang / Berjualan">
+        <option value="Bengkel">
+        <option value="Jasa Ojek/Angkutan">
+        <option value="Tukang Bangunan">
+        <option value="Buruh Harian">
+        <option value="Kerajinan/Industri Rumahan">
+      </datalist>
     </div>
   </div>
 
@@ -483,29 +496,11 @@
   <div class="section" data-sec="5">
     <div class="section-head" onclick="toggleSection(5)">
       <div class="qnum">10</div>
-      <div class="qtitle">Usaha, Modal & Laba</div>
+      <div class="qtitle">Aset Usaha (Bersama Keluarga)</div>
       <div class="chev">▾</div>
     </div>
     <div class="section-body">
-      <label>Nama / Jenis Usaha (kosongkan bila tidak ada)</label>
-      <input type="text" id="f_namaUsaha" placeholder="cth. Warung Kelontong">
-
-      <label>Rincian Modal Usaha (apa saja & harganya)</label>
-      <div id="modalUsahaList"></div>
-      <button class="add-dashed" onclick="addModalUsaha()">+ Tambah Rincian Modal</button>
-      <div class="hint" id="totalModalUsahaHint">Total modal usaha: Rp 0</div>
-
-      <div class="row2">
-        <div>
-          <label>Gaji Karyawan / Bulan (Rp)</label>
-          <input type="text" id="f_gajiKaryawan" class="rp-input" placeholder="0" inputmode="numeric">
-        </div>
-        <div>
-          <label>Laba / Bulan (Rp)</label>
-          <input type="text" id="f_labaUsaha" class="rp-input" placeholder="0" inputmode="numeric">
-        </div>
-      </div>
-
+      <div class="hint" style="margin-bottom:10px">Usaha, modal, gaji karyawan & laba kini diisi per-anggota di bagian 1–2 di atas (tiap orang bisa punya lebih dari satu usaha). Bagian ini khusus untuk aset usaha yang dipakai bersama keluarga.</div>
       <label>Aset Usaha (peralatan, mesin, inventaris, dll)</label>
       <div id="asetUsahaList"></div>
       <button class="add-dashed" onclick="addAsetUsaha()">+ Tambah Aset Usaha</button>
@@ -752,6 +747,7 @@ function renderList(){
 
   list.innerHTML = filtered.map(h=>{
     const totalPendapatan = (h.anggota||[]).reduce((s,a)=>s+(Number(a.pendapatan)||0),0);
+    const allUsahaNames = (h.anggota||[]).flatMap(a=>(a.usaha||[]).map(u=>u.nama).filter(Boolean));
     const jmlAnggota = (h.anggota||[]).length;
     return `
     <div class="card">
@@ -763,7 +759,7 @@ function renderList(){
       </div>
       <div class="card-meta">
         <div>Pendapatan <b>${fmtRp(totalPendapatan)}</b></div>
-        ${h.namaUsaha ? `<div>Usaha <b>${escapeHtml(h.namaUsaha)}</b></div>` : ''}
+        ${allUsahaNames.length ? `<div>Usaha <b>${escapeHtml(allUsahaNames.join(', '))}</b></div>` : ''}
       </div>
       <div class="card-meta" style="margin-top:4px">
         <div>Didata <b>${fmtDate(h.createdAt)}</b></div>
@@ -905,6 +901,8 @@ function addAnggota(data){
     ? (Array.isArray(data.pekerjaan) ? data.pekerjaan : [data.pekerjaan])
     : [''];
   const pekerjaanRowsHtml = pekerjaanList.map(p=>pekerjaanRowHtml(p)).join('');
+  const usahaList = (data && Array.isArray(data.usaha)) ? data.usaha : [];
+  const usahaRowsHtml = usahaList.map(u=>usahaRowHtml(u)).join('');
   div.innerHTML = `
     <button class="remove-x" onclick="this.parentElement.remove()">✕</button>
     <div class="idx">Anggota ${wrap.children.length+1}</div>
@@ -917,6 +915,9 @@ function addAnggota(data){
     <input type="text" class="ag-pendapatan rp-input" placeholder="0" inputmode="numeric" value="${data&&data.pendapatan?Number(data.pendapatan).toLocaleString('id-ID'):''}">
     <label>Penyakit / Riwayat Kesehatan (opsional)</label>
     <input type="text" class="ag-penyakit" placeholder="cth. Hipertensi, tidak ada, dll" value="${data&&data.penyakit?escapeAttr(data.penyakit):''}">
+    <label>Usaha (bisa lebih dari satu)</label>
+    <div class="usaha-list">${usahaRowsHtml}</div>
+    <button type="button" class="add-dashed" style="padding:8px; font-size:12px" onclick="addUsahaRow(this)">+ Tambah Usaha</button>
   `;
   wrap.appendChild(div);
 }
@@ -926,6 +927,33 @@ function pekerjaanRowHtml(value){
       <input type="text" class="ag-pekerjaan-item" placeholder="cth. Petani" value="${value?escapeAttr(value):''}" style="flex:1">
       <button type="button" class="btn btn-red btn-sm" style="padding:0 12px" onclick="this.parentElement.remove()">✕</button>
     </div>`;
+}
+function usahaRowHtml(u){
+  u = u || {};
+  return `
+    <div class="usaha-item-card" style="background:var(--bg-alt); border:1px solid var(--line); border-radius:9px; padding:11px; margin-bottom:9px; position:relative;">
+      <button type="button" class="remove-x" style="top:8px; right:8px" onclick="this.parentElement.remove()">✕</button>
+      <label style="margin-top:0">Nama / Jenis Usaha</label>
+      <input type="text" class="us-nama" placeholder="cth. Tani, Perkebunan, Peternakan, Warung" list="usahaSaran" value="${u.nama?escapeAttr(u.nama):''}">
+      <div class="row2">
+        <div>
+          <label>Modal (Rp)</label>
+          <input type="text" class="us-modal rp-input" placeholder="0" inputmode="numeric" value="${u.modal?Number(u.modal).toLocaleString('id-ID'):''}">
+        </div>
+        <div>
+          <label>Laba/bln (Rp)</label>
+          <input type="text" class="us-laba rp-input" placeholder="0" inputmode="numeric" value="${u.laba?Number(u.laba).toLocaleString('id-ID'):''}">
+        </div>
+      </div>
+      <label>Gaji Karyawan/bln (Rp)</label>
+      <input type="text" class="us-gaji rp-input" placeholder="0" inputmode="numeric" value="${u.gaji?Number(u.gaji).toLocaleString('id-ID'):''}">
+    </div>`;
+}
+function addUsahaRow(btn){
+  const list = btn.previousElementSibling;
+  const div = document.createElement('div');
+  div.innerHTML = usahaRowHtml();
+  list.appendChild(div.firstElementChild);
 }
 function addPekerjaanRow(btn){
   const list = btn.previousElementSibling;
@@ -1264,30 +1292,17 @@ function addAsetUsaha(data){
 }
 
 /* ---------- Dynamic: Rincian Modal Usaha ---------- */
-function addModalUsaha(data){
-  const wrap = document.getElementById('modalUsahaList');
-  const div = document.createElement('div');
-  div.className = 'kendaraan-card';
-  div.innerHTML = `
-    <button class="remove-x" onclick="this.parentElement.remove(); updateSummary();">✕</button>
-    <label>Rincian Modal (nama barang/keperluan)</label>
-    <input type="text" class="mu-nama" placeholder="cth. Sewa Tempat, Bahan Baku, Stok Barang" value="${data&&data.nama?escapeAttr(data.nama):''}">
-    <label>Harga (Rp)</label>
-    <input type="text" class="mu-harga rp-input" placeholder="0" inputmode="numeric" value="${data&&data.harga?Number(data.harga).toLocaleString('id-ID'):''}">
-  `;
-  wrap.appendChild(div);
-}
+
 
 /* ---------- Form <-> Data ---------- */
 function clearForm(){
   ['f_nomorBangunan','f_nomorKeluarga','f_kepala','f_dusun','f_idListrik','f_bayarListrik','f_makananMinggu','f_nonMakananBulan',
-   'f_nonMakananTahun','f_luasRumah','f_namaUsaha','f_gajiKaryawan','f_labaUsaha','f_catatanKesehatan','f_nomorWa']
+   'f_nonMakananTahun','f_luasRumah','f_catatanKesehatan','f_nomorWa']
    .forEach(id=>document.getElementById(id).value='');
   document.getElementById('anggotaList').innerHTML='';
   document.getElementById('kendaraanList').innerHTML='';
   document.getElementById('asetList').innerHTML='';
   document.getElementById('asetUsahaList').innerHTML='';
-  document.getElementById('modalUsahaList').innerHTML='';
   currentFotos = {};
   ['depan','ruangtamu','kk','meteran'].forEach(renderFotoSlot);
   updateSummary();
@@ -1306,14 +1321,10 @@ async function fillForm(h){
   document.getElementById('f_nonMakananBulan').value = h.nonMakananBulan ? Number(h.nonMakananBulan).toLocaleString('id-ID') : '';
   document.getElementById('f_nonMakananTahun').value = h.nonMakananTahun ? Number(h.nonMakananTahun).toLocaleString('id-ID') : '';
   document.getElementById('f_luasRumah').value = h.luasRumah||'';
-  document.getElementById('f_namaUsaha').value = h.namaUsaha||'';
-  document.getElementById('f_gajiKaryawan').value = h.gajiKaryawan ? Number(h.gajiKaryawan).toLocaleString('id-ID') : '';
-  document.getElementById('f_labaUsaha').value = h.labaUsaha ? Number(h.labaUsaha).toLocaleString('id-ID') : '';
   document.getElementById('f_catatanKesehatan').value = h.catatanKesehatan||'';
   (h.anggota||[]).forEach(a=>addAnggota(a));
   (h.kendaraan||[]).forEach(k=>addKendaraan(k));
   (h.asetItems||[]).forEach(a=>addAset(a));
-  (h.modalUsahaItems||[]).forEach(m=>addModalUsaha(m));
   (h.asetUsaha||[]).forEach(a=>addAsetUsaha(a));
   updateSummary();
 
@@ -1332,6 +1343,12 @@ function collectAnggota(){
     pekerjaan: [...el.querySelectorAll('.ag-pekerjaan-item')].map(i=>i.value.trim()).filter(v=>v),
     pendapatan: parseRupiah(el.querySelector('.ag-pendapatan').value),
     penyakit: el.querySelector('.ag-penyakit').value.trim(),
+    usaha: [...el.querySelectorAll('.usaha-item-card')].map(u=>({
+      nama: u.querySelector('.us-nama').value.trim(),
+      modal: parseRupiah(u.querySelector('.us-modal').value),
+      laba: parseRupiah(u.querySelector('.us-laba').value),
+      gaji: parseRupiah(u.querySelector('.us-gaji').value),
+    })).filter(u=>u.nama || u.modal || u.laba || u.gaji),
   }));
 }
 function collectKendaraan(){
@@ -1353,13 +1370,6 @@ function collectAsetUsaha(){
     harga: parseRupiah(el.querySelector('.au-harga').value),
   }));
 }
-function collectModalUsaha(){
-  return [...document.querySelectorAll('#modalUsahaList .kendaraan-card')].map(el=>({
-    nama: el.querySelector('.mu-nama').value.trim(),
-    harga: parseRupiah(el.querySelector('.mu-harga').value),
-  }));
-}
-
 function updateSummary(){
   const totalPendapatan = collectAnggota().reduce((s,a)=>s+a.pendapatan,0);
   const bulanNonMakanan = parseRupiah(document.getElementById('f_nonMakananBulan').value);
@@ -1373,15 +1383,12 @@ function updateSummary(){
   const totalAset = collectAset().reduce((s,a)=>s+a.harga,0);
   const totalKendaraan = collectKendaraan().reduce((s,k)=>s+k.harga,0);
   const totalAsetUsaha = collectAsetUsaha().reduce((s,a)=>s+a.harga,0);
-  const totalModalUsaha = collectModalUsaha().reduce((s,m)=>s+m.harga,0);
   const asetHint = document.getElementById('totalAsetHint');
   const kendaraanHint = document.getElementById('totalKendaraanHint');
   const asetUsahaHint = document.getElementById('totalAsetUsahaHint');
-  const modalUsahaHint = document.getElementById('totalModalUsahaHint');
   if(asetHint) asetHint.textContent = 'Total nilai aset: ' + fmtRp(totalAset);
   if(kendaraanHint) kendaraanHint.textContent = 'Total nilai kendaraan: ' + fmtRp(totalKendaraan);
   if(asetUsahaHint) asetUsahaHint.textContent = 'Total nilai aset usaha: ' + fmtRp(totalAsetUsaha);
-  if(modalUsahaHint) modalUsahaHint.textContent = 'Total modal usaha: ' + fmtRp(totalModalUsaha);
 }
 document.getElementById('formView').addEventListener('input', updateSummary);
 
@@ -1413,11 +1420,6 @@ async function saveHousehold(){
     aset: collectAset().reduce((s,a)=>s+a.harga,0),
     luasRumah: Number(document.getElementById('f_luasRumah').value)||0,
     kendaraan: collectKendaraan(),
-    namaUsaha: document.getElementById('f_namaUsaha').value.trim(),
-    modalUsahaItems: collectModalUsaha(),
-    modalUsaha: collectModalUsaha().reduce((s,m)=>s+m.harga,0),
-    gajiKaryawan: parseRupiah(document.getElementById('f_gajiKaryawan').value),
-    labaUsaha: parseRupiah(document.getElementById('f_labaUsaha').value),
     asetUsaha: collectAsetUsaha(),
     fotoKeys: Object.keys(currentFotos),
     catatanKesehatan: document.getElementById('f_catatanKesehatan').value.trim(),
@@ -1555,7 +1557,14 @@ function exportOne(id){
     : '  - Tidak ada';
   const totalKendaraan = (h.kendaraan||[]).reduce((s,k)=>s+(Number(k.harga)||0),0);
   const anggotaStr = (h.anggota||[]).length
-    ? h.anggota.map((a,i)=>`  ${i+1}. ${a.nama||'-'} | Pekerjaan: ${(Array.isArray(a.pekerjaan)?a.pekerjaan.join(', '):a.pekerjaan)||'-'} | Pendapatan: ${fmtRp(a.pendapatan)} | Penyakit: ${a.penyakit||'-'}`).join('\n')
+    ? h.anggota.map((a,i)=>{
+        const pekerjaanStr = (Array.isArray(a.pekerjaan)?a.pekerjaan.join(', '):a.pekerjaan)||'-';
+        const usahaArr = (a.usaha||[]).filter(u=>u.nama||u.modal||u.laba||u.gaji);
+        const usahaStr = usahaArr.length
+          ? usahaArr.map(u=>`       · ${u.nama||'-'} | Modal: ${fmtRp(u.modal)} | Laba/bln: ${fmtRp(u.laba)} | Gaji Karyawan/bln: ${fmtRp(u.gaji)}`).join('\n')
+          : '';
+        return `  ${i+1}. ${a.nama||'-'} | Pekerjaan: ${pekerjaanStr} | Pendapatan: ${fmtRp(a.pendapatan)} | Penyakit: ${a.penyakit||'-'}` + (usahaStr ? `\n     Usaha:\n${usahaStr}` : '');
+      }).join('\n')
     : '  - Belum ada data anggota';
   const totalPendapatan = (h.anggota||[]).reduce((s,a)=>s+(Number(a.pendapatan)||0),0);
 
@@ -1570,7 +1579,7 @@ Nomor WA         : ${h.nomorWa||'-'}
 Didata pada      : ${fmtDate(h.createdAt)}
 Terakhir diubah  : ${fmtDate(h.updatedAt)}
 
-1-2. ANGGOTA KELUARGA (Pekerjaan & Pendapatan)
+1-2. ANGGOTA KELUARGA (Pekerjaan, Pendapatan & Usaha)
 ------------------------------------------
 ${anggotaStr}
 Total Pendapatan Keluarga/bln: ${fmtRp(totalPendapatan)}
@@ -1596,15 +1605,9 @@ ${asetStr}
 ${kendaraanStr}
   Total nilai kendaraan  : ${fmtRp(totalKendaraan)}
 
-10. USAHA
+10. ASET USAHA (BERSAMA KELUARGA)
 ------------------------------------------
-  Nama/Jenis Usaha : ${h.namaUsaha||'Tidak ada usaha'}
-  Rincian Modal Usaha:
-${(h.modalUsahaItems||[]).length ? h.modalUsahaItems.map(m=>`    - ${m.nama||'-'}: ${fmtRp(m.harga)}`).join('\n') : '    - Tidak ada'}
-  Total Modal Usaha : ${fmtRp(h.modalUsaha)}
-  Gaji Karyawan/bulan : ${fmtRp(h.gajiKaryawan)}
-  Laba/bulan       : ${fmtRp(h.labaUsaha)}
-  Aset Usaha:
+  (Rincian usaha per orang ada di bagian 1-2 di atas)
 ${(h.asetUsaha||[]).length ? h.asetUsaha.map(a=>`    - ${a.nama||'-'}: ${fmtRp(a.harga)}`).join('\n') : '    - Tidak ada'}
   Total nilai aset usaha : ${fmtRp((h.asetUsaha||[]).reduce((s,a)=>s+(Number(a.harga)||0),0))}
 
@@ -1636,9 +1639,10 @@ function exportData(){
 function exportCSV(){
   const headers = [
     'Nomor Bangunan','Nomor Keluarga','Dusun','Kepala Keluarga','Nomor WA','Nama Anggota','Pekerjaan','Pendapatan/bln','Penyakit',
+    'Usaha Anggota Ini (Nama | Modal | Laba/bln | Gaji Karyawan/bln)',
     'ID Listrik','Bayar Listrik/bln','Pengeluaran Makanan/minggu','Pengeluaran Non-Makanan/bln',
-    'Pengeluaran Non-Makanan/thn','Rincian Aset','Total Nilai Aset','Kendaraan','Luas Rumah (m2)','Nama Usaha',
-    'Rincian Modal Usaha','Total Modal Usaha','Gaji Karyawan/bln','Laba Usaha/bln','Rincian Aset Usaha','Total Nilai Aset Usaha'
+    'Pengeluaran Non-Makanan/thn','Rincian Aset','Total Nilai Aset','Kendaraan','Luas Rumah (m2)',
+    'Rincian Aset Usaha (Bersama)','Total Nilai Aset Usaha'
   ];
   const rows = [];
   households.slice().sort(sortByBangunanKeluarga).forEach(h=>{
@@ -1646,18 +1650,18 @@ function exportCSV(){
     const asetStr = (h.asetItems||[]).map(a=>`${a.nama} (${fmtRp(a.harga)})`).join('; ');
     const asetUsahaStr = (h.asetUsaha||[]).map(a=>`${a.nama} (${fmtRp(a.harga)})`).join('; ');
     const totalAsetUsaha = (h.asetUsaha||[]).reduce((s,a)=>s+(Number(a.harga)||0),0);
-    const modalUsahaStr = (h.modalUsahaItems||[]).map(m=>`${m.nama} (${fmtRp(m.harga)})`).join('; ');
-    const anggota = h.anggota && h.anggota.length ? h.anggota : [{nama:'',pekerjaan:'',pendapatan:'',penyakit:''}];
+    const anggota = h.anggota && h.anggota.length ? h.anggota : [{nama:'',pekerjaan:'',pendapatan:'',penyakit:'',usaha:[]}];
     anggota.forEach((a,i)=>{
+      const usahaStr = (a.usaha||[]).filter(u=>u.nama||u.modal||u.laba||u.gaji)
+        .map(u=>`${u.nama||'-'} (Modal ${fmtRp(u.modal)}, Laba/bln ${fmtRp(u.laba)}, Gaji Karyawan/bln ${fmtRp(u.gaji)})`).join('; ');
       rows.push([
         i===0?h.nomorBangunan:'', i===0?h.nomorKeluarga:'',
         i===0?h.dusun:'', i===0?h.kepala:'', i===0?h.nomorWa:'',
         a.nama, (Array.isArray(a.pekerjaan)?a.pekerjaan.join(', '):a.pekerjaan)||'', a.pendapatan, a.penyakit,
+        usahaStr,
         i===0?h.idListrik:'', i===0?h.bayarListrik:'',
         i===0?h.makananMinggu:'', i===0?h.nonMakananBulan:'', i===0?h.nonMakananTahun:'',
         i===0?asetStr:'', i===0?h.aset:'', i===0?kendaraanStr:'', i===0?h.luasRumah:'',
-        i===0?h.namaUsaha:'',
-        i===0?modalUsahaStr:'', i===0?h.modalUsaha:'', i===0?h.gajiKaryawan:'', i===0?h.labaUsaha:'',
         i===0?asetUsahaStr:'', i===0?totalAsetUsaha:''
       ]);
     });
