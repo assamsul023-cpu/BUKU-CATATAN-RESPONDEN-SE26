@@ -756,6 +756,11 @@ function sortByBangunanKeluarga(a,b){
 }
 
 /* ---------- List view ---------- */
+function normalizeDusunKey(name){
+  return String(name||'').trim().replace(/\s+/g,' ').toLowerCase()
+    .split(' ').map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(' ');
+}
+
 const DUSUN_STATUS_KEY = 'sensus2026_dusun_status_v1';
 let dusunCollapsed = new Set(); // dusun yang sedang ditutup (di memori, reset tiap buka app)
 
@@ -786,7 +791,7 @@ function renderList(){
   const empty = document.getElementById('emptyState');
   document.getElementById('totalCount').textContent = households.length;
 
-  const dusuns = [...new Set(households.map(h=>h.dusun).filter(Boolean))];
+  const dusuns = [...new Set(households.map(h=>h.dusun).filter(Boolean).map(normalizeDusunKey))];
   document.getElementById('dusunSubtitle').textContent = dusuns.length
     ? dusuns.length + ' dusun terdata: ' + dusuns.slice(0,3).join(', ') + (dusuns.length>3?'...':'')
     : 'Belum ada dusun aktif';
@@ -808,7 +813,7 @@ function renderList(){
   const groups = {};
   const groupOrder = [];
   filtered.forEach(h=>{
-    const key = h.dusun || '(Belum Ada Dusun)';
+    const key = h.dusun ? normalizeDusunKey(h.dusun) : '(Belum Ada Dusun)';
     if(!groups[key]){ groups[key] = []; groupOrder.push(key); }
     groups[key].push(h);
   });
@@ -896,7 +901,7 @@ let prelistDusunOrder = []; // ['', 'Dusun A', 'Dusun B', ...] — '' = Semua Du
 let prelistCurrentIndex = 0;
 
 function openPrelist(){
-  const dusuns = [...new Set(households.map(h=>h.dusun).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'id'));
+  const dusuns = [...new Set(households.map(h=>h.dusun).filter(Boolean).map(normalizeDusunKey))].sort((a,b)=>a.localeCompare(b,'id'));
   prelistDusunOrder = ['', ...dusuns]; // halaman pertama = Semua Dusun
 
   const tabsEl = document.getElementById('prelistTabs');
@@ -907,7 +912,7 @@ function openPrelist(){
   const pagesEl = document.getElementById('prelistPages');
   pagesEl.innerHTML = prelistDusunOrder.map((d,i)=>{
     const data = households
-      .filter(h => !d || h.dusun === d)
+      .filter(h => !d || normalizeDusunKey(h.dusun) === d)
       .slice()
       .sort(sortByBangunanKeluarga);
     const rowsHtml = data.length === 0
@@ -964,7 +969,7 @@ function getCurrentPrelistDusun(){
 }
 function getFilteredPrelistData(){
   const d = getCurrentPrelistDusun();
-  return households.filter(h => !d || h.dusun === d).slice().sort(sortByBangunanKeluarga);
+  return households.filter(h => !d || normalizeDusunKey(h.dusun) === d).slice().sort(sortByBangunanKeluarga);
 }
 function printPrelist(){
   window.print();
@@ -1603,7 +1608,7 @@ async function saveHousehold(){
 
 function refreshDusunList(){
   const dl = document.getElementById('dusunList');
-  const dusuns = [...new Set(households.map(h=>h.dusun).filter(Boolean))];
+  const dusuns = [...new Set(households.map(h=>h.dusun).filter(Boolean).map(normalizeDusunKey))].sort((a,b)=>a.localeCompare(b,'id'));
   dl.innerHTML = dusuns.map(d=>`<option value="${escapeAttr(d)}">`).join('');
 }
 
