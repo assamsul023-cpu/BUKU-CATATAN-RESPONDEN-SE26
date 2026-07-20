@@ -104,7 +104,25 @@
   .empty .glyph{font-size:38px; margin-bottom:10px; opacity:.6;}
   .empty p{font-size:13.5px; line-height:1.6;}
 
-  .card-list{display:flex; flex-direction:column; gap:10px;}
+  .card-list{display:flex; flex-direction:column; gap:16px;}
+
+  .dusun-block{border-radius:14px;}
+  .dusun-block-header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:12px 4px; cursor:pointer;
+  }
+  .dusun-block-title{
+    font-family:var(--font-display); font-size:16px; font-weight:600;
+    display:flex; align-items:center; gap:8px;
+  }
+  .dusun-block.done .dusun-block-title{color:var(--teal);}
+  .dusun-block-count{
+    font-family:var(--font-mono); font-size:11px; color:var(--paper-dim);
+    background:var(--surface); border:1px solid var(--line); border-radius:20px;
+    padding:2px 9px;
+  }
+  .dusun-block-chev{color:var(--paper-dim); font-size:13px;}
+  .dusun-block-body{display:flex; flex-direction:column; gap:10px;}
   .card{
     background:var(--surface);
     border:1px solid var(--line);
@@ -738,6 +756,30 @@ function sortByBangunanKeluarga(a,b){
 }
 
 /* ---------- List view ---------- */
+const DUSUN_STATUS_KEY = 'sensus2026_dusun_status_v1';
+let dusunCollapsed = new Set(); // dusun yang sedang ditutup (di memori, reset tiap buka app)
+
+function getDusunStatus(){
+  try{ return JSON.parse(localStorage.getItem(DUSUN_STATUS_KEY)) || {}; }catch(e){ return {}; }
+}
+function setDusunStatus(status){
+  try{ localStorage.setItem(DUSUN_STATUS_KEY, JSON.stringify(status)); }catch(e){}
+}
+function toggleDusunSelesai(dusunKey){
+  const status = getDusunStatus();
+  if(status[dusunKey]) delete status[dusunKey];
+  else status[dusunKey] = true;
+  setDusunStatus(status);
+  if(status[dusunKey]) dusunCollapsed.add(dusunKey); // otomatis tutup begitu ditandai selesai
+  else dusunCollapsed.delete(dusunKey);
+  renderList();
+}
+function toggleDusunCollapse(dusunKey){
+  if(dusunCollapsed.has(dusunKey)) dusunCollapsed.delete(dusunKey);
+  else dusunCollapsed.add(dusunKey);
+  renderList();
+}
+
 function renderList(){
   const q = document.getElementById('searchBox').value.trim().toLowerCase();
   const list = document.getElementById('cardList');
@@ -761,11 +803,50 @@ function renderList(){
   }
   empty.style.display = 'none';
 
-  list.innerHTML = filtered.map(h=>{
-    const totalPendapatan = (h.anggota||[]).reduce((s,a)=>s+(Number(a.pendapatan)||0),0);
-    const allUsahaNames = (h.anggota||[]).flatMap(a=>(a.usaha||[]).map(u=>u.nama).filter(Boolean));
-    const jmlAnggota = (h.anggota||[]).length;
+  // Kelompokkan per dusun
+  const status = getDusunStatus();
+  const groups = {};
+  const groupOrder = [];
+  filtered.forEach(h=>{
+    const key = h.dusun || '(Belum Ada Dusun)';
+    if(!groups[key]){ groups[key] = []; groupOrder.push(key); }
+    groups[key].push(h);
+  });
+  // Urutan: dusun aktif (belum selesai) dulu (alfabetis), lalu dusun selesai di bawah
+  groupOrder.sort((a,b)=>{
+    const aDone = !!status[a], bDone = !!status[b];
+    if(aDone !== bDone) return aDone ? 1 : -1;
+    return a.localeCompare(b, 'id');
+  });
+
+  list.innerHTML = groupOrder.map(dusunKey=>{
+    const items = groups[dusunKey];
+    const isDone = !!status[dusunKey];
+    const isCollapsed = dusunCollapsed.has(dusunKey) || isDone;
+    const isNoDusun = dusunKey === '(Belum Ada Dusun)';
+    const cardsHtml = items.map(h=>renderHouseholdCard(h)).join('');
+
     return `
+    <div class="dusun-block ${isDone ? 'done' : ''}">
+      <div class="dusun-block-header" onclick="toggleDusunCollapse('${escapeAttr(dusunKey)}')">
+        <div class="dusun-block-title">
+          ${isDone ? '✓ ' : ''}${escapeHtml(dusunKey)}
+          <span class="dusun-block-count">${items.length}</span>
+        </div>
+        <div class="dusun-block-chev">${isCollapsed ? '▸' : '▾'}</div>
+      </div>
+      ${!isCollapsed ? `<div class="dusun-block-body">${cardsHtml}
+        ${!isNoDusun ? `<button class="btn ${isDone?'btn-ghost':'btn-teal'} btn-sm btn-block" style="margin-top:4px" onclick="event.stopPropagation(); toggleDusunSelesai('${escapeAttr(dusunKey)}')">${isDone ? '↺ Buka Lagi Dusun Ini' : '✓ Tandai Dusun Ini Selesai'}</button>` : ''}
+      </div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function renderHouseholdCard(h){
+  const totalPendapatan = (h.anggota||[]).reduce((s,a)=>s+(Number(a.pendapatan)||0),0);
+  const allUsahaNames = (h.anggota||[]).flatMap(a=>(a.usaha||[]).map(u=>u.nama).filter(Boolean));
+  const jmlAnggota = (h.anggota||[]).length;
+  return `
     <div class="card">
       <div class="card-row">
         <div>
@@ -789,7 +870,6 @@ function renderList(){
         <button class="btn btn-red btn-sm" onclick="askDelete('${h.id}')">✕ Hapus</button>
       </div>
     </div>`;
-  }).join('');
 }
 function fmtDate(ts){
   if(!ts) return '-';
