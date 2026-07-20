@@ -309,11 +309,35 @@
   .prelist-header{padding:6px 2px 14px;}
   .prelist-title{font-family:var(--font-display); font-size:20px; margin:0 0 4px;}
   .prelist-sub{font-size:12px; color:var(--paper-dim);}
+
+  .prelist-tabs{
+    display:flex; gap:8px; overflow-x:auto; -webkit-overflow-scrolling:touch;
+    padding-bottom:12px; margin-bottom:4px; scrollbar-width:none;
+  }
+  .prelist-tabs::-webkit-scrollbar{display:none;}
+  .prelist-tab{
+    flex:0 0 auto; padding:8px 16px; border-radius:20px; font-size:12.5px; font-weight:600;
+    background:var(--surface); border:1px solid var(--line); color:var(--paper-dim);
+    white-space:nowrap; cursor:pointer;
+  }
+  .prelist-tab.active{background:var(--amber); color:#1a1005; border-color:var(--amber);}
+
+  .prelist-pages{
+    display:flex; overflow-x:auto; scroll-snap-type:x mandatory;
+    -webkit-overflow-scrolling:touch; scrollbar-width:none; border-radius:12px;
+  }
+  .prelist-pages::-webkit-scrollbar{display:none;}
+  .prelist-page{
+    flex:0 0 100%; scroll-snap-align:start; scroll-snap-stop:always;
+  }
+  .prelist-page-label{
+    font-size:11px; color:var(--paper-dim); margin-bottom:8px; text-transform:uppercase; letter-spacing:.05em;
+  }
   .prelist-table-wrap{
     background:var(--surface); border:1px solid var(--line); border-radius:12px;
     overflow-x:auto; -webkit-overflow-scrolling:touch;
   }
-  .prelist-table{width:100%; border-collapse:collapse; font-size:13px; min-width:480px;}
+  .prelist-table{width:100%; border-collapse:collapse; font-size:13px; min-width:100%;}
   .prelist-table th{
     text-align:left; font-family:var(--font-mono); font-size:10.5px; text-transform:uppercase;
     letter-spacing:.05em; color:var(--paper-dim); padding:10px 12px; border-bottom:1px solid var(--line);
@@ -331,9 +355,12 @@
     body *{visibility:hidden;}
     #prelistView, #prelistView *{visibility:visible;}
     #prelistView{position:absolute; left:0; top:0; width:100%; padding:0;}
+    .prelist-tabs{display:none;}
+    .prelist-pages{display:block; overflow:visible;}
+    .prelist-page{display:block; width:100%; page-break-after:always;}
     .prelist-table-wrap{border:none; background:none;}
     .prelist-table th, .prelist-table td{border-bottom:1px solid #999; color:#000;}
-    .prelist-title, .prelist-sub{color:#000;}
+    .prelist-title, .prelist-sub, .prelist-page-label{color:#000;}
     .bottombar, .fab{display:none !important;}
   }
   @media (max-width:360px){
@@ -604,21 +631,10 @@
 <div class="view" id="prelistView">
   <div class="prelist-header">
     <h2 class="prelist-title">Prelist Responden</h2>
-    <div class="prelist-sub">Terurut berdasarkan Nomor Bangunan → Nomor Keluarga</div>
+    <div class="prelist-sub">Geser ke kiri/kanan untuk pindah dusun</div>
   </div>
-  <div class="prelist-table-wrap">
-    <table class="prelist-table" id="prelistTable">
-      <thead>
-        <tr>
-          <th>No</th>
-          <th>Nama Kepala Keluarga</th>
-          <th>No. Bangunan</th>
-          <th>No. Keluarga</th>
-        </tr>
-      </thead>
-      <tbody id="prelistBody"></tbody>
-    </table>
-  </div>
+  <div class="prelist-tabs" id="prelistTabs"></div>
+  <div class="prelist-pages" id="prelistPages"></div>
   <div style="height:80px"></div>
 </div>
 
@@ -796,28 +812,86 @@ function showView(name){
   document.getElementById('fab').style.display = name==='list' ? 'block' : 'none';
 }
 
+let prelistDusunOrder = []; // ['', 'Dusun A', 'Dusun B', ...] — '' = Semua Dusun
+let prelistCurrentIndex = 0;
+
 function openPrelist(){
-  const sorted = households.slice().sort(sortByBangunanKeluarga);
-  const tbody = document.getElementById('prelistBody');
-  if(sorted.length === 0){
-    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--paper-dim); padding:24px;">Belum ada data responden.</td></tr>`;
-  }else{
-    tbody.innerHTML = sorted.map((h,i)=>`
-      <tr>
-        <td>${i+1}</td>
-        <td>${escapeHtml(h.kepala||'(Tanpa nama)')}</td>
-        <td>${escapeHtml(h.nomorBangunan||'-')}</td>
-        <td>${escapeHtml(h.nomorKeluarga||'-')}</td>
-      </tr>`).join('');
-  }
+  const dusuns = [...new Set(households.map(h=>h.dusun).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'id'));
+  prelistDusunOrder = ['', ...dusuns]; // halaman pertama = Semua Dusun
+
+  const tabsEl = document.getElementById('prelistTabs');
+  tabsEl.innerHTML = prelistDusunOrder.map((d,i)=>`
+    <div class="prelist-tab${i===0?' active':''}" data-idx="${i}" onclick="goToPrelistPage(${i})">${d ? escapeHtml(d) : 'Semua Dusun'}</div>
+  `).join('');
+
+  const pagesEl = document.getElementById('prelistPages');
+  pagesEl.innerHTML = prelistDusunOrder.map((d,i)=>{
+    const data = households
+      .filter(h => !d || h.dusun === d)
+      .slice()
+      .sort(sortByBangunanKeluarga);
+    const rowsHtml = data.length === 0
+      ? `<tr><td colspan="4" style="text-align:center; color:var(--paper-dim); padding:24px;">Belum ada data responden${d ? ' di dusun ini' : ''}.</td></tr>`
+      : data.map((h,ri)=>`
+          <tr>
+            <td>${ri+1}</td>
+            <td>${escapeHtml(h.kepala||'(Tanpa nama)')}</td>
+            <td>${escapeHtml(h.nomorBangunan||'-')}</td>
+            <td>${escapeHtml(h.nomorKeluarga||'-')}</td>
+          </tr>`).join('');
+    return `
+      <div class="prelist-page" data-idx="${i}" data-dusun="${escapeAttr(d)}">
+        <div class="prelist-page-label">${d ? escapeHtml(d) : 'Semua Dusun'} · ${data.length} keluarga</div>
+        <div class="prelist-table-wrap">
+          <table class="prelist-table">
+            <thead><tr><th>No</th><th>Nama Kepala Keluarga</th><th>No. Bangunan</th><th>No. Keluarga</th></tr></thead>
+            <tbody>${rowsHtml}</tbody>
+          </table>
+        </div>
+      </div>`;
+  }).join('');
+
+  prelistCurrentIndex = 0;
+  pagesEl.scrollLeft = 0;
+  pagesEl.onscroll = onPrelistScroll;
+
   showView('prelist');
   window.scrollTo(0,0);
+}
+function onPrelistScroll(){
+  const pagesEl = document.getElementById('prelistPages');
+  const idx = Math.round(pagesEl.scrollLeft / pagesEl.clientWidth);
+  if(idx !== prelistCurrentIndex){
+    prelistCurrentIndex = idx;
+    updatePrelistActiveTab();
+  }
+}
+function updatePrelistActiveTab(){
+  document.querySelectorAll('.prelist-tab').forEach(t=>{
+    t.classList.toggle('active', Number(t.dataset.idx) === prelistCurrentIndex);
+  });
+  const activeTab = document.querySelector(`.prelist-tab[data-idx="${prelistCurrentIndex}"]`);
+  if(activeTab) activeTab.scrollIntoView({behavior:'smooth', inline:'center', block:'nearest'});
+}
+function goToPrelistPage(idx){
+  const pagesEl = document.getElementById('prelistPages');
+  pagesEl.scrollTo({ left: idx * pagesEl.clientWidth, behavior:'smooth' });
+  prelistCurrentIndex = idx;
+  updatePrelistActiveTab();
+}
+function getCurrentPrelistDusun(){
+  return prelistDusunOrder[prelistCurrentIndex] || '';
+}
+function getFilteredPrelistData(){
+  const d = getCurrentPrelistDusun();
+  return households.filter(h => !d || h.dusun === d).slice().sort(sortByBangunanKeluarga);
 }
 function printPrelist(){
   window.print();
 }
 function downloadPrelist(){
-  const sorted = households.slice().sort(sortByBangunanKeluarga);
+  const sorted = getFilteredPrelistData();
+  const filterDusun = getCurrentPrelistDusun();
   if(sorted.length === 0){ alert('Belum ada data responden untuk dibuat prelist.'); return; }
   const headers = ['No','Nama Kepala Keluarga','No. Bangunan','No. Keluarga'];
   const rows = sorted.map((h,i)=>[i+1, h.kepala||'', h.nomorBangunan||'', h.nomorKeluarga||'']);
@@ -825,7 +899,8 @@ function downloadPrelist(){
     const s = String(cell??'');
     return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s;
   }).join(',')).join('\n');
-  downloadFile('Prelist_Responden_SE2026_'+dateStamp()+'.csv', '\uFEFF'+csv, 'text/csv;charset=utf-8');
+  const dusunSuffix = filterDusun ? '_'+filterDusun.replace(/[^a-z0-9]+/gi,'_') : '_SemuaDusun';
+  downloadFile('Prelist_Responden_SE2026'+dusunSuffix+'_'+dateStamp()+'.csv', '\uFEFF'+csv, 'text/csv;charset=utf-8');
 }
 
 function newHousehold(){
@@ -1976,7 +2051,18 @@ document.addEventListener('DOMContentLoaded', function(){
   renderList();
   migrateOldPhotos();
   initLightboxGestures();
+  requestPersistentStorage();
 });
+
+// Minta browser agar TIDAK menghapus data aplikasi ini secara otomatis saat HP kekurangan
+// ruang penyimpanan. Ini penyebab paling umum akun "keluar sendiri" tanpa sebab jelas.
+function requestPersistentStorage(){
+  if(navigator.storage && navigator.storage.persist){
+    navigator.storage.persist().then(function(granted){
+      console.log('Persistent storage:', granted ? 'diizinkan' : 'ditolak (masih best-effort)');
+    }).catch(function(){});
+  }
+}
 
 // Daftarkan service worker (mode PWA) — biar aplikasi tetap bisa dibuka offline
 // setelah dipasang ke layar utama. Aman diabaikan kalau dibuka sebagai file lokal biasa.
