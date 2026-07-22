@@ -762,7 +762,7 @@ function normalizeDusunKey(name){
 }
 
 const DUSUN_STATUS_KEY = 'sensus2026_dusun_status_v1';
-let dusunCollapsed = new Set(); // dusun yang sedang ditutup (di memori, reset tiap buka app)
+let dusunOpenOverride = {}; // dusun yang statusnya sudah diubah manual dari default (di memori, reset tiap buka app)
 
 function getDusunStatus(){
   try{ return JSON.parse(localStorage.getItem(DUSUN_STATUS_KEY)) || {}; }catch(e){ return {}; }
@@ -775,13 +775,15 @@ function toggleDusunSelesai(dusunKey){
   if(status[dusunKey]) delete status[dusunKey];
   else status[dusunKey] = true;
   setDusunStatus(status);
-  if(status[dusunKey]) dusunCollapsed.add(dusunKey); // otomatis tutup begitu ditandai selesai
-  else dusunCollapsed.delete(dusunKey);
+  // Reset override: ikuti default baru (selesai -> tertutup, dibuka lagi -> terbuka)
+  delete dusunOpenOverride[dusunKey];
   renderList();
 }
 function toggleDusunCollapse(dusunKey){
-  if(dusunCollapsed.has(dusunKey)) dusunCollapsed.delete(dusunKey);
-  else dusunCollapsed.add(dusunKey);
+  const status = getDusunStatus();
+  const isDone = !!status[dusunKey];
+  const currentlyOpen = dusunKey in dusunOpenOverride ? dusunOpenOverride[dusunKey] : !isDone;
+  dusunOpenOverride[dusunKey] = !currentlyOpen;
   renderList();
 }
 
@@ -827,7 +829,8 @@ function renderList(){
   list.innerHTML = groupOrder.map(dusunKey=>{
     const items = groups[dusunKey];
     const isDone = !!status[dusunKey];
-    const isCollapsed = dusunCollapsed.has(dusunKey) || isDone;
+    const isOpen = dusunKey in dusunOpenOverride ? dusunOpenOverride[dusunKey] : !isDone;
+    const isCollapsed = !isOpen;
     const isNoDusun = dusunKey === '(Belum Ada Dusun)';
     const cardsHtml = items.map(h=>renderHouseholdCard(h)).join('');
 
@@ -1615,7 +1618,7 @@ async function saveHousehold(){
     if(status[dusunKey]){
       delete status[dusunKey];
       setDusunStatus(status);
-      dusunCollapsed.delete(dusunKey);
+      delete dusunOpenOverride[dusunKey];
     }
   }
 
