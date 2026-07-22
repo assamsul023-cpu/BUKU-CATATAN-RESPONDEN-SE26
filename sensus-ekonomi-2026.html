@@ -1606,6 +1606,19 @@ async function saveHousehold(){
 
   const idx = households.findIndex(h=>h.id===data.id);
   if(idx>=0) households[idx] = data; else households.push(data);
+
+  // Kalau dusun ini tadinya ditandai "selesai", buka lagi otomatis supaya data baru/diedit
+  // langsung terlihat, tidak ketutup di bagian bawah.
+  if(data.dusun){
+    const dusunKey = normalizeDusunKey(data.dusun);
+    const status = getDusunStatus();
+    if(status[dusunKey]){
+      delete status[dusunKey];
+      setDusunStatus(status);
+      dusunCollapsed.delete(dusunKey);
+    }
+  }
+
   persist();
   refreshDusunList();
   if(saveBtn){ saveBtn.disabled = false; saveBtn.textContent = '✓ Simpan Data'; }
