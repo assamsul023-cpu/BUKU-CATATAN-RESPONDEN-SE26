@@ -1,4 +1,4 @@
-const CACHE_NAME = 'se2026-cache-v1';
+const CACHE_NAME = 'se2026-cache-v3';
 const FILES_TO_CACHE = [
   './sensus-ekonomi-2026.html',
   './manifest.json',
